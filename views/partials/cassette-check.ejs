@@ -1,27 +1,23 @@
 <!-- Cassette Number Collision Modal -->
 <div id="cassetteModal" class="fixed inset-0 z-[200] hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="card-theme w-full max-w-lg rounded-3xl p-8 shadow-2xl relative animate-in zoom-in duration-200">
+    <div class="card-theme w-full max-w-lg rounded-3xl p-8 shadow-2xl relative animate-in zoom-in duration-200 max-h-[90vh] flex flex-col">
 
-        <div class="text-center mb-6">
+        <div class="text-center mb-6 flex-shrink-0">
             <div class="w-14 h-14 rounded-full bg-yellow-500/10 text-yellow-500 flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-tag text-2xl"></i>
             </div>
             <h2 class="text-xl font-black mb-1">Kassettennummer bereits vergeben</h2>
             <p class="text-sm opacity-60">
-                Die Nummer <span id="cassetteNumberLabel" class="font-bold"></span> ist bereits vergeben an:
-                <span id="cassetteExistingTitles" class="font-bold"></span>.
-                Ist das dieselbe physische Kassette?
+                Die Nummer <span id="cassetteNumberLabel" class="font-bold"></span> wird schon verwendet. Zu welcher Kassette gehört dieser Film?
             </p>
         </div>
 
-        <div class="flex flex-col gap-2">
-            <button id="cassetteSameBtn"
-                class="w-full bg-primary-theme text-white hover:brightness-110 font-bold py-3 rounded-xl transition-all active:scale-95">
-                Ja – gehört zur selben Kassette
-            </button>
-            <button id="cassetteSuffixBtn"
+        <div id="cassetteGroupList" class="space-y-2 overflow-y-auto flex-grow mb-4 pr-1"></div>
+
+        <div class="flex flex-col gap-2 flex-shrink-0">
+            <button id="cassetteNewBtn"
                 class="w-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-bold py-3 rounded-xl transition-all active:scale-95">
-                Nein – andere Kassette (<span id="cassetteSuggestion"></span> verwenden)
+                Neue Kassette (<span id="cassetteSuggestion"></span> verwenden)
             </button>
             <button onclick="closeCassetteModal()"
                 class="w-full text-sm opacity-40 hover:opacity-70 py-2 transition-opacity">
@@ -42,6 +38,13 @@
         _cassetteInputEl = null;
     }
 
+    function pickCassetteNumber(number) {
+        if (_cassetteInputEl) _cassetteInputEl.value = number;
+        const fn = _cassetteResolveFn;
+        closeCassetteModal();
+        if (fn) fn();
+    }
+
     async function checkCassetteNumber(cassetteNumber, excludeId, inputEl, onProceed) {
         const val = (cassetteNumber || '').trim();
         if (!val) { onProceed(); return; }
@@ -58,24 +61,26 @@
             _cassetteSuggestion = data.suggestion;
 
             document.getElementById('cassetteNumberLabel').textContent = val;
-            document.getElementById('cassetteExistingTitles').textContent = data.titles.join(', ');
             document.getElementById('cassetteSuggestion').textContent = data.suggestion;
+
+            const list = document.getElementById('cassetteGroupList');
+            list.innerHTML = '';
+            data.groups.forEach(g => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full text-left p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white transition-all active:scale-95';
+                btn.innerHTML = `<span class="font-bold">${g.number}</span> <span class="opacity-60">&ndash; ${g.titles.join(', ')}</span>`;
+                btn.addEventListener('click', () => pickCassetteNumber(g.number));
+                list.appendChild(btn);
+            });
+
             document.getElementById('cassetteModal').classList.remove('hidden');
         } catch (e) {
             onProceed();
         }
     }
 
-    document.getElementById('cassetteSameBtn').addEventListener('click', () => {
-        const fn = _cassetteResolveFn;
-        closeCassetteModal();
-        if (fn) fn();
-    });
-
-    document.getElementById('cassetteSuffixBtn').addEventListener('click', () => {
-        if (_cassetteInputEl) _cassetteInputEl.value = _cassetteSuggestion;
-        const fn = _cassetteResolveFn;
-        closeCassetteModal();
-        if (fn) fn();
+    document.getElementById('cassetteNewBtn').addEventListener('click', () => {
+        pickCassetteNumber(_cassetteSuggestion);
     });
 </script>

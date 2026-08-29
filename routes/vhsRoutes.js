@@ -712,25 +712,36 @@ router.get('/api/check-cassette-number', requireAuth, async (req, res) => {
 
         const adminId = await getAdminId();
         const escReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const exactReg = new RegExp(`^${escReg(val)}$`, 'i');
 
-        const query = { owner: adminId, kind: 'VHS', cassette_number: exactReg };
+        // Match the base number AND any "-N" suffix variants already created for it,
+        // so a collision offers every existing physical tape in the family, not just the base.
+        const familyReg = new RegExp(`^${escReg(val)}(-\\d+)?$`, 'i');
+        const query = { owner: adminId, kind: 'VHS', cassette_number: familyReg };
         if (excludeId) query._id = { $ne: excludeId };
 
-        const matches = await Item.find(query).select('title').lean();
+        const matches = await Item.find(query).select('title cassette_number').lean();
         if (!matches.length) return res.json({ taken: false });
 
-        const variantReg = new RegExp(`^${escReg(val)}-(\\d+)$`, 'i');
-        const variants = await Item.find({ owner: adminId, kind: 'VHS', cassette_number: variantReg }).select('cassette_number').lean();
+        const groupsByKey = {};
+        matches.forEach(m => {
+            const key = m.cassette_number.toLowerCase();
+            if (!groupsByKey[key]) groupsByKey[key] = { number: m.cassette_number, titles: [] };
+            groupsByKey[key].titles.push(m.title);
+        });
+        const groups = Object.values(groupsByKey).sort((a, b) =>
+            a.number.localeCompare(b.number, undefined, { numeric: true })
+        );
+
+        const suffixReg = new RegExp(`^${escReg(val)}-(\\d+)$`, 'i');
         let maxSuffix = 1;
-        variants.forEach(v => {
-            const m = v.cassette_number.match(variantReg);
-            if (m) maxSuffix = Math.max(maxSuffix, parseInt(m[1], 10));
+        matches.forEach(m => {
+            const s = m.cassette_number.match(suffixReg);
+            if (s) maxSuffix = Math.max(maxSuffix, parseInt(s[1], 10));
         });
 
         res.json({
             taken: true,
-            titles: [...new Set(matches.map(m => m.title))],
+            groups,
             suggestion: `${val}-${maxSuffix + 1}`
         });
     } catch (err) {
