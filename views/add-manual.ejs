@@ -1,0 +1,366 @@
+<%- include('partials/header') %>
+
+<div class="max-w-screen-lg mx-auto pb-20 px-4">
+
+    <nav class="flex mb-6 text-sm opacity-60 transition-colors">
+        <a href="<%= baseUrl %>/add-vhs" class="hover:opacity-100 transition-opacity flex items-center py-2">
+            <i class="fa-solid fa-arrow-left mr-2"></i> <%= t('common.back_to_search') %>
+        </a>
+    </nav>
+
+    <div class="text-center mb-8 md:mb-12">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-theme/10 mb-4">
+            <i class="fa-solid fa-pen-to-square text-3xl text-primary-theme"></i>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-black"><%= t('add_vhs.manual_title') %></h1>
+        <p class="opacity-60 mt-2"><%= t('add_vhs.manual_desc') %></p>
+    </div>
+
+    <form action="<%= baseUrl %>/save-vhs" method="POST" class="space-y-6">
+
+        <input type="hidden" name="cast_json" value="[]">
+        <input type="hidden" name="cover_image" id="coverImageInput" value="">
+        <input type="hidden" name="backdrop_image" value="">
+        <input type="hidden" name="user_image" value="">
+        <input type="hidden" name="in_wishlist" id="inWishlistInput" value="false">
+
+        <!-- Original vs. Aufnahme -->
+        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+            <h2 class="text-sm font-black uppercase tracking-widest opacity-60 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-tags text-primary-theme"></i>
+                <%= t('confirm_vhs.original_section') %>
+            </h2>
+            <div class="flex items-center gap-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="is_original" value="true" id="isOriginalInput" checked class="sr-only peer">
+                    <div class="w-12 h-7 bg-black/10 dark:bg-white/10 rounded-full peer peer-checked:bg-primary-theme transition-all"></div>
+                    <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+                </label>
+                <span id="isOriginalLabel" class="text-sm font-bold"><%= t('confirm_vhs.is_original_yes') %></span>
+            </div>
+            <p class="text-xs opacity-50 mt-2"><%= t('confirm_vhs.original_hint') %></p>
+        </div>
+
+        <!-- Grunddaten -->
+        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+            <h2 class="text-sm font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-primary-theme"></i>
+                <%= t('confirm_vhs.section_basics') %>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.field_title') %> <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="title" required
+                        placeholder="<%= t('confirm_vhs.field_title_placeholder') %>"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.field_director') %>
+                    </label>
+                    <input type="text" name="director"
+                        placeholder="<%= t('confirm_vhs.field_director_placeholder') %>"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.year_label') %>
+                    </label>
+                    <input type="number" name="year" min="1900" max="<%= new Date().getFullYear() %>"
+                        placeholder="z.B. 1994"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.country') %>
+                    </label>
+                    <input type="text" name="country"
+                        placeholder="z.B. Germany, UK, US"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.distributor_label') %>
+                    </label>
+                    <input type="text" name="distributor"
+                        placeholder="z.B. VCL, VPS, Warner Home Video"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.catalog_label') %>
+                    </label>
+                    <input type="text" name="catalog_number"
+                        placeholder="z.B. VHS-4711"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.field_genres') %>
+                    </label>
+                    <input type="text" name="genres"
+                        placeholder="Action, Komödie, Horror (kommagetrennt)"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Beschreibung -->
+        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+            <h2 class="text-sm font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-align-left text-primary-theme"></i>
+                <%= t('confirm_vhs.section_description') %>
+            </h2>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.field_overview') %>
+                    </label>
+                    <textarea name="overview" rows="4"
+                        placeholder="<%= t('confirm_vhs.overview_placeholder') %>"
+                        class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg focus:ring-primary-theme focus:border-primary-theme block w-full p-3 placeholder-opacity-50 transition-colors outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.field_tagline') %>
+                    </label>
+                    <input type="text" name="tagline"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+            </div>
+        </div>
+
+        <!-- Cover -->
+        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+            <h2 class="text-sm font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-image text-primary-theme"></i>
+                <%= t('confirm_vhs.section_cover') %>
+            </h2>
+            <div class="flex flex-col sm:flex-row gap-6 items-start">
+                <div class="w-32 h-44 flex-shrink-0 rounded-xl bg-black/5 dark:bg-white/5 overflow-hidden flex items-center justify-center">
+                    <img id="coverPreview" src="" class="w-full h-full object-cover hidden">
+                    <i id="coverPlaceholder" class="fa-solid fa-film text-4xl opacity-20"></i>
+                </div>
+                <div class="flex-grow">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.cover_url_label') %>
+                    </label>
+                    <input type="url" id="coverUrlField"
+                        placeholder="https://..."
+                        oninput="updateCover(this.value)"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                    <p class="text-xs opacity-50 mt-2"><%= t('confirm_vhs.cover_url_hint') %></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details -->
+        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+            <h2 class="text-sm font-black uppercase tracking-widest opacity-60 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-primary-theme"></i>
+                <%= t('confirm_vhs.section_details') %>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.barcode_label') %>
+                    </label>
+                    <input type="text" name="barcode"
+                        placeholder="z.B. 4006448122129"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.format_label') %>
+                    </label>
+                    <input type="text" name="format_type" value="VHS"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.region_label') %>
+                    </label>
+                    <input type="text" name="region"
+                        placeholder="PAL / NTSC / SECAM"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.runtime_label') %>
+                    </label>
+                    <input type="number" name="runtime" min="1"
+                        placeholder="z.B. 96"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.age_rating_label') %>
+                    </label>
+                    <input type="text" name="age_rating"
+                        placeholder="z.B. 12, 16, 18"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.condition_label') %>
+                    </label>
+                    <div class="relative group">
+                        <select name="condition" class="select-theme w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg pl-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all cursor-pointer">
+                            <option value="" class="bg-white dark:bg-[#1a1a1a]" selected><%= t('confirm_vhs.condition_placeholder') %></option>
+                            <option value="sealed" class="bg-white dark:bg-[#1a1a1a]"><%= t('vhs.condition.sealed') %></option>
+                            <option value="mint"   class="bg-white dark:bg-[#1a1a1a]"><%= t('vhs.condition.mint') %></option>
+                            <option value="good"   class="bg-white dark:bg-[#1a1a1a]"><%= t('vhs.condition.good') %></option>
+                            <option value="fair"   class="bg-white dark:bg-[#1a1a1a]"><%= t('vhs.condition.fair') %></option>
+                            <option value="poor"   class="bg-white dark:bg-[#1a1a1a]"><%= t('vhs.condition.poor') %></option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <i class="fa-solid fa-box-archive mr-1"></i> <%= t('common.location') %>
+                    </label>
+                    <input type="text" name="location" list="locationList"
+                        placeholder="<%= t('placeholders.location') %>"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                    <datalist id="locationList">
+                        <% locations.forEach(loc => { %><option value="<%= loc %>"><% }) %>
+                    </datalist>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.field_quantity') %>
+                    </label>
+                    <input type="number" name="quantity" min="1" value="1"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <i class="fa-solid fa-tag mr-1"></i> <%= t('confirm_vhs.cassette_number_label') %>
+                    </label>
+                    <input type="text" name="cassette_number"
+                        placeholder="<%= t('confirm_vhs.cassette_number_placeholder') %>"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                    <p class="text-[11px] opacity-50 mt-1"><%= t('confirm_vhs.cassette_number_hint') %></p>
+                </div>
+
+                <div id="priceFields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                            <%= t('confirm_vhs.estimated_value_label') %>
+                        </label>
+                        <input type="number" name="estimated_value" min="0" step="0.01"
+                            placeholder="z.B. 25.00"
+                            class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                            <%= t('confirm_vhs.estimated_currency_label') %>
+                        </label>
+                        <select name="estimated_currency" class="select-theme w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg pl-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all cursor-pointer">
+                            <option value="EUR" class="bg-white dark:bg-[#1a1a1a]">EUR</option>
+                            <option value="USD" class="bg-white dark:bg-[#1a1a1a]">USD</option>
+                            <option value="GBP" class="bg-white dark:bg-[#1a1a1a]">GBP</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        TMDb-ID <span class="opacity-50 font-normal normal-case text-xs ml-2">– optional, für spätere Metadaten-Anreicherung</span>
+                    </label>
+                    <input type="text" name="tmdb_id"
+                        placeholder="z.B. 603"
+                        class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                        <%= t('confirm_vhs.field_comments') %>
+                    </label>
+                    <textarea name="comments" rows="3"
+                        placeholder="<%= t('confirm_vhs.comments_placeholder') %>"
+                        class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg focus:ring-primary-theme focus:border-primary-theme block w-full p-3 placeholder-opacity-50 transition-colors outline-none"></textarea>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Speichern -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-end">
+            <button type="button" onclick="submitAs('wishlist')"
+                class="w-full sm:w-auto bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white border border-black/10 dark:border-white/10 font-bold px-8 py-4 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-3">
+                <i class="fa-solid fa-heart"></i>
+                <%= t('confirm_vhs.btn_wishlist') %>
+            </button>
+            <button type="button" onclick="submitAs('collection')"
+                class="w-full sm:w-auto bg-primary-theme hover:brightness-110 font-bold text-white px-8 py-4 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-3 shadow-lg shadow-primary-theme/20">
+                <i class="fa-solid fa-film"></i>
+                <%= t('confirm_vhs.btn_collection') %>
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+
+    const isOriginalInput = document.getElementById('isOriginalInput');
+    const isOriginalLabel = document.getElementById('isOriginalLabel');
+    const priceFields = document.getElementById('priceFields');
+    const originalYesText = <%- JSON.stringify(t('confirm_vhs.is_original_yes')) %>;
+    const originalNoText = <%- JSON.stringify(t('confirm_vhs.is_original_no')) %>;
+
+    function syncOriginalUI() {
+        isOriginalLabel.textContent = isOriginalInput.checked ? originalYesText : originalNoText;
+        priceFields.classList.toggle('hidden', !isOriginalInput.checked);
+    }
+    isOriginalInput.addEventListener('change', syncOriginalUI);
+    syncOriginalUI();
+
+    function updateCover(url) {
+        document.getElementById('coverImageInput').value = url;
+        const img = document.getElementById('coverPreview');
+        const ph  = document.getElementById('coverPlaceholder');
+        if (url) { img.src = url; img.classList.remove('hidden'); ph.classList.add('hidden'); }
+        else      { img.classList.add('hidden'); ph.classList.remove('hidden'); }
+    }
+
+    function submitAs(target) {
+        const form = document.querySelector('form');
+        const title    = form.querySelector('[name="title"]')?.value || '';
+        const director = form.querySelector('[name="director"]')?.value || '';
+
+        const doSubmit = () => {
+            document.getElementById('inWishlistInput').value = target === 'wishlist' ? 'true' : 'false';
+            form.submit();
+        };
+
+        checkDuplicate(title, director, null, doSubmit);
+    }
+</script>
+
+<%- include('partials/duplicate-check') %>
+
+<%- include('partials/footer') %>

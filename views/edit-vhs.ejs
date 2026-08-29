@@ -1,0 +1,428 @@
+<%- include('partials/header') %>
+
+<div class="max-w-screen-xl mx-auto pb-20 px-4 md:px-0">
+    <nav class="flex mb-6 text-sm opacity-60 transition-colors">
+        <a href="<%= baseUrl %>/vhs/<%= tape._id %>" class="hover:opacity-100 transition-opacity flex items-center py-2">
+            <i class="fa-solid fa-arrow-left mr-2"></i> <%= t('common.cancel_back') %>
+        </a>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-4 space-y-6">
+            <div class="card-theme rounded-xl p-6 sticky top-24 transition-colors shadow-sm">
+                <div class="aspect-[2/3] rounded-lg overflow-hidden mb-4 shadow-lg relative group bg-black/5 dark:bg-white/5">
+                    <img id="livePreview" src="<%= tape.cover_image %>" class="w-full h-full object-cover transition-all duration-500">
+                </div>
+                <h2 class="text-xl font-bold mb-1"><%= tape.title %></h2>
+                <p class="opacity-60 mb-4"><%= tape.director %></p>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8">
+            <div class="card-theme rounded-xl p-6 md:p-8 transition-colors shadow-sm">
+                <h1 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-primary-theme"></i> <%= t('edit_vhs.title') %>
+                </h1>
+
+                <form action="<%= baseUrl %>/save-vhs" method="POST" class="space-y-6">
+
+                    <!-- Original vs. Aufnahme -->
+                    <div class="p-4 rounded-2xl border border-black/10 dark:border-white/10 flex items-center gap-4">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="is_original" value="true" id="isOriginalInput" <%= tape.is_original !== false ? 'checked' : '' %> class="sr-only peer">
+                            <div class="w-12 h-7 bg-black/10 dark:bg-white/10 rounded-full peer peer-checked:bg-primary-theme transition-all"></div>
+                            <div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+                        </label>
+                        <div>
+                            <span id="isOriginalLabel" class="text-sm font-bold block"><%= t('confirm_vhs.is_original_yes') %></span>
+                            <span class="text-xs opacity-50"><%= t('confirm_vhs.original_hint') %></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-700/30 p-4 rounded-lg transition-colors">
+                        <label class="block mb-2 text-sm font-bold text-yellow-700 dark:text-yellow-500">TMDb-ID</label>
+                        <div class="text-xs text-yellow-800/80 dark:text-yellow-200/60 mb-2"><%= t('edit_vhs.tmdb_id_hint') %></div>
+                        <input type="number" name="tmdb_id" value="<%= tape.tmdb_id %>" class="bg-white dark:bg-black/20 border border-yellow-300 dark:border-yellow-600/50 text-sm rounded-lg focus:ring-yellow-500 block w-full p-2.5 font-mono outline-none">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.field_title') %></label>
+                            <input type="text" name="title" value="<%= tape.title %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.field_director') %></label>
+                            <input type="text" name="director" value="<%= tape.director %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.year_label') %></label>
+                            <input type="text" name="year" value="<%= tape.year %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none" placeholder="Ex: 1994">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.runtime_label') %></label>
+                            <input type="number" name="runtime" value="<%= tape.runtime || '' %>" min="1" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.age_rating_label') %></label>
+                            <input type="text" name="age_rating" value="<%= tape.age_rating || '' %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.field_overview') %></label>
+                            <textarea name="overview" rows="3" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none"><%= tape.overview %></textarea>
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.field_tagline') %></label>
+                            <input type="text" name="tagline" value="<%= tape.tagline || '' %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.distributor_label') %></label>
+                            <input type="text" name="distributor" value="<%= tape.distributor %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.catalog_label') %></label>
+                            <input type="text" name="catalog_number" value="<%= tape.catalog_number %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest text-primary-theme"><%= t('confirm_vhs.region_label') %></label>
+                            <input type="text" name="region" value="<%= tape.region %>" class="bg-black/5 dark:bg-white/5 border border-primary-theme/30 text-sm rounded-lg focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60 flex items-center gap-2">
+                                <%= t('confirm_vhs.barcode_label') %>
+                                <label class="cursor-pointer flex items-center ml-auto" title="<%= t('confirm_vhs.barcode_locked') %>">
+                                    <input type="checkbox" name="barcode_locked" class="hidden peer" <%= tape.barcode_locked ? 'checked' : '' %>>
+                                    <i class="fa-solid fa-unlock opacity-30 peer-checked:hidden"></i>
+                                    <i class="fa-solid fa-lock text-primary-theme hidden peer-checked:block"></i>
+                                </label>
+                            </label>
+                            <input type="text" name="barcode" value="<%= tape.barcode %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none font-mono" placeholder="EAN / UPC">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.country') %></label>
+                            <input type="text" name="country" value="<%= tape.country %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none" placeholder="US, Europe...">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.field_quantity') %></label>
+                            <input type="number" name="quantity" value="<%= tape.quantity || 1 %>" min="1" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.format_label') %></label>
+                            <input type="text" name="format_type" value="<%= tape.format_type %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><i class="fa-solid fa-tag mr-1"></i> <%= t('confirm_vhs.cassette_number_label') %></label>
+                            <input type="text" name="cassette_number" value="<%= tape.cassette_number || '' %>" placeholder="<%= t('confirm_vhs.cassette_number_placeholder') %>" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg text-sm focus:ring-primary-theme block w-full p-3 outline-none">
+                            <p class="text-[11px] opacity-50 mt-1"><%= t('confirm_vhs.cassette_number_hint') %></p>
+                        </div>
+                    </div>
+
+                    <div id="priceFields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2"><%= t('confirm_vhs.estimated_value_label') %></label>
+                            <input type="number" name="estimated_value" min="0" step="0.01" value="<%= (tape.estimated_price && tape.estimated_price.value) || '' %>" class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2"><%= t('confirm_vhs.estimated_currency_label') %></label>
+                            <select name="estimated_currency" class="select-theme w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg pl-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none cursor-pointer">
+                                <% ['EUR','USD','GBP'].forEach(c => { %>
+                                    <option value="<%= c %>" class="bg-white dark:bg-[#1a1a1a]" <%= (tape.estimated_price && tape.estimated_price.currency === c) ? 'selected' : '' %>><%= c %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="border-black/10 dark:border-white/10 my-6">
+
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <input id="checkEditCover" type="checkbox" class="w-4 h-4 text-primary-theme bg-black/5 dark:bg-white/10 border-transparent rounded focus:ring-primary-theme focus:ring-2 cursor-pointer transition-colors">
+                            <label for="checkEditCover" class="ml-2 text-sm font-bold cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
+                                <%= t('edit_vhs.change_cover') %>
+                            </label>
+                        </div>
+                        <input type="hidden" name="cover_image" id="inputCoverImage" value="<%= tape.cover_image %>">
+
+                        <div id="boxEditCover" class="hidden p-4 card-theme rounded-2xl border border-black/10 dark:border-white/10 shadow-inner">
+                            <div class="flex gap-1 mb-6 p-1 bg-black/5 dark:bg-white/5 rounded-xl">
+                                <button type="button" onclick="setImgTab('cover', 'local')" id="tab-cover-local" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all bg-primary-theme text-white">
+                                    <i class="fa-solid fa-upload mr-1"></i> <%= t('confirm_vhs.source_local') %>
+                                </button>
+                                <button type="button" onclick="setImgTab('cover', 'url')" id="tab-cover-url" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all opacity-50">
+                                    <i class="fa-solid fa-link mr-1"></i> <%= t('confirm_vhs.source_url') %>
+                                </button>
+                                <button type="button" onclick="setImgTab('cover', 'search')" id="tab-cover-search" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all opacity-50">
+                                    <i class="fa-solid fa-search mr-1"></i> <%= t('confirm_vhs.source_search') %>
+                                </button>
+                            </div>
+
+                            <div id="pane-cover-local" class="img-pane-cover">
+                                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-black/10 dark:border-white/10 rounded-2xl cursor-pointer hover:bg-black/5 transition-all">
+                                    <i class="fa-solid fa-cloud-arrow-up text-2xl opacity-20 mb-2"></i>
+                                    <p class="text-xs font-bold opacity-50 italic"><%= t('confirm_vhs.browse_files') %></p>
+                                    <input type="file" id="fileInputCover" class="hidden" accept="image/*">
+                                </label>
+                            </div>
+                            <div id="pane-cover-url" class="img-pane-cover hidden">
+                                <input type="url" id="urlInputCover" placeholder="https://site.com/image.jpg" class="w-full bg-white dark:bg-black/20 border-transparent rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-primary-theme">
+                            </div>
+                            <div id="pane-cover-search" class="img-pane-cover hidden">
+                                <div class="flex gap-2 mb-4">
+                                    <input type="text" id="queryCover" value="<%= tape.title %>" class="flex-grow bg-white dark:bg-black/20 border-transparent rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-primary-theme">
+                                    <button type="button" onclick="runUniversalSearch('cover')" class="bg-primary-theme text-white px-4 rounded-lg hover:brightness-110"><i class="fa-solid fa-search"></i></button>
+                                </div>
+                                <div id="resultsCover" class="grid grid-cols-3 gap-3 max-h-60 overflow-y-auto custom-scrollbar p-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 space-y-4">
+                        <div class="flex items-center">
+                            <input id="checkEditDisc" type="checkbox" <%= tape.user_image ? 'checked' : '' %> class="w-4 h-4 text-primary-theme bg-black/5 dark:bg-white/10 border-transparent rounded focus:ring-primary-theme focus:ring-2 cursor-pointer transition-colors">
+                            <label for="checkEditDisc" class="ml-2 text-sm font-bold cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
+                                <%= t('edit_vhs.edit_secondary_visual') %>
+                            </label>
+                        </div>
+                        <input type="hidden" name="user_image" id="inputUserImage" value="<%= tape.user_image %>">
+
+                        <div id="boxEditDisc" class="hidden p-4 card-theme rounded-2xl border border-primary-theme/30 shadow-inner">
+                            <div class="flex gap-1 mb-6 p-1 bg-black/5 dark:bg-white/5 rounded-xl">
+                                <button type="button" onclick="setImgTab('disc', 'local')" id="tab-disc-local" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all bg-primary-theme text-white">
+                                    <i class="fa-solid fa-upload mr-1"></i> <%= t('confirm_vhs.source_local') %>
+                                </button>
+                                <button type="button" onclick="setImgTab('disc', 'url')" id="tab-disc-url" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all opacity-50">
+                                    <i class="fa-solid fa-link mr-1"></i> <%= t('confirm_vhs.source_url') %>
+                                </button>
+                                <button type="button" onclick="setImgTab('disc', 'search')" id="tab-disc-search" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all opacity-50">
+                                    <i class="fa-solid fa-search mr-1"></i> <%= t('confirm_vhs.source_search') %>
+                                </button>
+                            </div>
+
+                            <div id="pane-disc-local" class="img-pane-disc">
+                                <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-black/10 dark:border-white/10 rounded-2xl cursor-pointer hover:bg-black/5 transition-all">
+                                    <i class="fa-solid fa-film text-2xl opacity-20 mb-2"></i>
+                                    <p class="text-xs font-bold opacity-50 italic"><%= t('confirm_vhs.browse_files') %></p>
+                                    <input type="file" id="fileInputDisc" class="hidden" accept="image/*">
+                                </label>
+                            </div>
+                            <div id="pane-disc-url" class="img-pane-disc hidden">
+                                <input type="url" id="urlInputDisc" placeholder="https://site.com/photo.jpg" class="w-full bg-white dark:bg-black/20 border-transparent rounded-lg p-3 text-sm outline-none focus:ring-2 focus:ring-primary-theme">
+                            </div>
+                            <div id="pane-disc-search" class="img-pane-disc hidden">
+                                <div class="flex gap-2 mb-4">
+                                    <input type="text" id="queryDisc" value="<%= tape.title %>" class="flex-grow bg-white dark:bg-black/20 border-transparent rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-primary-theme">
+                                    <button type="button" onclick="runUniversalSearch('disc')" class="bg-primary-theme text-white px-4 rounded-lg hover:brightness-110"><i class="fa-solid fa-search"></i></button>
+                                </div>
+                                <div id="resultsDisc" class="grid grid-cols-3 gap-3 max-h-60 overflow-y-auto custom-scrollbar p-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-black/10 dark:border-white/10 my-6">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                                <i class="fa-solid fa-box-archive mr-1"></i> <%= t('common.location') %>
+                            </label>
+                            <input type="text" name="location" list="locationList" value="<%= tape.location || '' %>" placeholder="<%= t('placeholders.location') %>" class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none">
+                            <datalist id="locationList">
+                                <% locations.forEach(loc => { %> <option value="<%= loc %>"> <% }) %>
+                            </datalist>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                                <i class="fa-solid fa-folder-open mr-1"></i> <%= t('confirm_vhs.condition_label') %>
+                            </label>
+                            <div class="relative group">
+                                <select name="condition" class="select-theme w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg pl-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all cursor-pointer">
+                                    <option value="" class="bg-white dark:bg-[#1a1a1a]" <%= (!tape.condition) ? 'selected' : '' %>><%= t('confirm_vhs.condition_placeholder') %></option>
+                                    <option value="sealed" class="bg-white dark:bg-[#1a1a1a]" <%= (tape.condition === 'sealed') ? 'selected' : '' %>><%= t('vhs.condition.sealed') %></option>
+                                    <option value="mint"   class="bg-white dark:bg-[#1a1a1a]" <%= (tape.condition === 'mint') ? 'selected' : '' %>><%= t('vhs.condition.mint') %></option>
+                                    <option value="good"   class="bg-white dark:bg-[#1a1a1a]" <%= (tape.condition === 'good') ? 'selected' : '' %>><%= t('vhs.condition.good') %></option>
+                                    <option value="fair"   class="bg-white dark:bg-[#1a1a1a]" <%= (tape.condition === 'fair') ? 'selected' : '' %>><%= t('vhs.condition.fair') %></option>
+                                    <option value="poor"   class="bg-white dark:bg-[#1a1a1a]" <%= (tape.condition === 'poor') ? 'selected' : '' %>><%= t('vhs.condition.poor') %></option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
+                            <i class="fa-solid fa-tags mr-1"></i> <%= t('confirm_vhs.field_genres') %>
+                        </label>
+                        <input type="text" name="genres" value="<%= tape.genres ? tape.genres.join(', ') : '' %>" placeholder="Action, Komödie..." class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none">
+                    </div>
+                    <div class="mt-6">
+                        <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.field_comments') %></label>
+                        <textarea name="comments" rows="2" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg focus:ring-primary-theme block w-full p-3 outline-none"><%= tape.comments %></textarea>
+                    </div>
+
+                    <input type="hidden" name="cast_json" value='<%- JSON.stringify(tape.cast || []) %>'>
+                    <input type="hidden" name="backdrop_image" value="<%= tape.backdrop_image %>">
+                    <input type="hidden" name="trailer_key" value="<%= tape.trailer_key %>">
+                    <input type="hidden" name="imdb_id" value="<%= tape.imdb_id %>">
+                    <input type="hidden" name="in_wishlist" value="<%= tape.in_wishlist %>">
+                    <input type="hidden" name="mongo_id" value="<%= tape._id %>">
+
+                    <button type="submit" class="w-full text-white bg-primary-theme hover:brightness-110 font-bold rounded-xl text-lg px-5 py-4 transition-transform hover:scale-[1.01] flex items-center justify-center gap-2 shadow-lg shadow-primary-theme/20">
+                        <i class="fa-solid fa-save"></i> <%= t('common.save_changes') %>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const isOriginalInput = document.getElementById('isOriginalInput');
+    const isOriginalLabel = document.getElementById('isOriginalLabel');
+    const priceFields = document.getElementById('priceFields');
+    const originalYesText = <%- JSON.stringify(t('confirm_vhs.is_original_yes')) %>;
+    const originalNoText = <%- JSON.stringify(t('confirm_vhs.is_original_no')) %>;
+
+    function syncOriginalUI() {
+        isOriginalLabel.textContent = isOriginalInput.checked ? originalYesText : originalNoText;
+        priceFields.classList.toggle('hidden', !isOriginalInput.checked);
+    }
+    isOriginalInput.addEventListener('change', syncOriginalUI);
+    syncOriginalUI();
+
+    const translations = {
+        noResults: <%- JSON.stringify(t('confirm_vhs.no_results')) %>,
+        networkError: <%- JSON.stringify(t('confirm_vhs.network_error')) %>,
+        compressAlert: <%- JSON.stringify(t('image_source.compress_alert')) %>,
+        loadingHtml: '<div class="col-span-full py-8 text-center opacity-50"><i class="fa-solid fa-spinner fa-spin text-xl"></i></div>'
+    };
+
+    const nodes = {
+        checkCover: document.getElementById('checkEditCover'),
+        boxCover: document.getElementById('boxEditCover'),
+        checkDisc: document.getElementById('checkEditDisc'),
+        boxDisc: document.getElementById('boxEditDisc'),
+        livePreview: document.getElementById('livePreview')
+    };
+
+    const toggleBox = (chk, box) => { if(chk && box) box.classList.toggle('hidden', !chk.checked); };
+
+    if (nodes.checkCover) {
+        toggleBox(nodes.checkCover, nodes.boxCover);
+        nodes.checkCover.addEventListener('change', (e) => toggleBox(e.target, nodes.boxCover));
+    }
+    if (nodes.checkDisc) {
+        toggleBox(nodes.checkDisc, nodes.boxDisc);
+        nodes.checkDisc.addEventListener('change', (e) => toggleBox(e.target, nodes.boxDisc));
+    }
+
+    function setImgTab(type, mode) {
+        document.querySelectorAll(`.img-pane-${type}`).forEach(p => p.classList.add('hidden'));
+        const target = document.getElementById(`pane-${type}-${mode}`);
+        if(target) target.classList.remove('hidden');
+
+        document.querySelectorAll(`[id^="tab-${type}-"]`).forEach(btn => {
+            btn.classList.remove('bg-primary-theme', 'text-white');
+            btn.classList.add('opacity-50');
+        });
+        const active = document.getElementById(`tab-${type}-${mode}`);
+        if(active) { active.classList.add('bg-primary-theme', 'text-white'); active.classList.remove('opacity-50'); }
+    }
+
+    function updateImageValue(type, source, element = null) {
+        const inputId = (type === 'cover') ? 'inputCoverImage' : 'inputUserImage';
+        const resultsId = (type === 'cover') ? 'resultsCover' : 'resultsDisc';
+        const hiddenInput = document.getElementById(inputId);
+        if (hiddenInput) hiddenInput.value = source;
+        if (type === 'cover' && nodes.livePreview) nodes.livePreview.src = source;
+
+        if (element) {
+            document.getElementById(resultsId).querySelectorAll('img').forEach(img => {
+                img.classList.remove('ring-4', 'ring-primary-theme');
+            });
+            element.classList.add('ring-4', 'ring-primary-theme');
+        }
+    }
+
+    async function runUniversalSearch(type) {
+        const query = document.getElementById(type === 'cover' ? 'queryCover' : 'queryDisc').value;
+        const resultsDiv = document.getElementById(type === 'cover' ? 'resultsCover' : 'resultsDisc');
+        resultsDiv.innerHTML = translations.loadingHtml;
+
+        try {
+            const endpoint = (type === 'disc')
+                ? `<%= baseUrl %>/admin/api/search-tmdb-gallery?q=${encodeURIComponent(query)}`
+                : `<%= baseUrl %>/admin/api/search-image-universal?q=${encodeURIComponent(query)}&type=movie`;
+            const res = await fetch(endpoint);
+            const urls = await res.json();
+
+            resultsDiv.innerHTML = '';
+            if (urls.length === 0) {
+                resultsDiv.innerHTML = `<p class="col-span-full text-xs text-center opacity-50 py-8">${translations.noResults}</p>`;
+                return;
+            }
+
+            urls.forEach(url => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = "aspect-square object-contain bg-black/5 dark:bg-white/5 rounded-xl cursor-pointer border-2 border-transparent hover:border-primary-theme transition-all p-1";
+                img.onclick = () => updateImageValue(type, url, img);
+                resultsDiv.appendChild(img);
+            });
+        } catch (e) {
+            resultsDiv.innerHTML = `<p class="col-span-full text-xs text-red-500 text-center py-8">${translations.networkError}</p>`;
+        }
+    }
+
+    function compressAndStore(file, type) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const MAX_SIZE = 800;
+                if (width > height) {
+                    if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+                } else {
+                    if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                }
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                updateImageValue(type.toLowerCase(), dataUrl);
+            };
+            img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    ['Cover', 'Disc'].forEach(type => {
+        const urlInput = document.getElementById(`urlInput${type}`);
+        const fileInput = document.getElementById(`fileInput${type}`);
+        if (urlInput) urlInput.addEventListener('input', (e) => { if (e.target.value.startsWith('http')) updateImageValue(type.toLowerCase(), e.target.value); });
+        if (fileInput) fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) alert(translations.compressAlert);
+                compressAndStore(file, type);
+            }
+        });
+    });
+</script>
+
+<%- include('partials/footer') %>

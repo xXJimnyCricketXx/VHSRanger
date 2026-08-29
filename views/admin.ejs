@@ -1,0 +1,932 @@
+<%- include('partials/header') %>
+
+    <div class="max-w-screen-xl mx-auto px-4 pb-20 space-y-10">
+
+        <div class="py-6">
+            <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-3 transition-colors">
+                <i class="fa-solid fa-shield-halved text-primary-theme"></i>
+                <%= t('admin.title') %>
+            </h1>
+        </div>
+
+        <% if (locals.newPassword) { %>
+            <div
+                class="bg-primary-theme/10 border border-primary-theme/30 p-6 rounded-2xl text-center animate-pulse transition-colors">
+                <h2 class="text-lg font-bold text-primary-theme mb-2">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <%= successMessage %>
+                </h2>
+                <p class="text-sm opacity-70 mb-4">
+                    <%= t('admin.temp_password_hint') %>
+                </p>
+                <div
+                    class="bg-white dark:bg-black/50 p-4 rounded-xl inline-flex items-center gap-3 border border-primary-theme/30 shadow-sm overflow-hidden max-w-full">
+                    <code class="text-xl md:text-2xl font-mono select-all break-all"><%= newPassword %></code>
+                </div>
+            </div>
+            <% } %>
+            
+                <%- include('partials/admin-visibility') %>
+
+                <section>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-6 gap-4 mb-4">
+                        <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-3 transition-colors">
+                            <i class="fa-solid fa-users text-primary-theme"></i>
+                            <%= t('admin.users_count', { count: users.length }) %>
+                        </h1>
+                        <button onclick="toggleModal('addUserModal')"
+                            class="group relative flex items-center gap-3 bg-primary-theme hover:brightness-110 text-white px-5 py-3 rounded-2xl shadow-lg shadow-primary-theme/20 transition-all active:scale-95 overflow-hidden">
+                            <div
+                                class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform">
+                            </div>
+                            <i class="fa-solid fa-user-plus text-sm relative"></i>
+                            <span class="text-xs font-black relative">
+                                <%= t('admin.modal.title') %>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="hidden md:block card-theme rounded-2xl overflow-hidden shadow-lg transition-colors">
+                        <table class="w-full text-left text-sm opacity-80">
+                            <thead class="bg-black/5 dark:bg-white/5 text-xs uppercase opacity-70 transition-colors">
+                                <tr>
+                                    <th class="px-6 py-4">
+                                        <%= t('admin.table.user') %>
+                                    </th>
+                                    <th class="px-6 py-4">
+                                        <%= t('admin.table.email') %>
+                                    </th>
+                                    <th class="px-6 py-4">
+                                        <%= t('admin.table.last_change') %>
+                                    </th>
+                                    <th class="px-6 py-4 text-right">
+                                        <%= t('admin.table.actions') %>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-black/5 dark:divide-white/5 transition-colors">
+                                <% users.forEach(u=> { %>
+                                    <tr class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                                        <td class="px-6 py-4 font-medium flex items-center gap-3">
+                                            <img src="<%= baseUrl + u.img %>"
+                                                class="w-8 h-8 rounded-full border border-black/10 dark:border-white/10 object-cover">
+                                            <%= u.username %>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <%= u.email %>
+                                        </td>
+                                        <td class="px-6 py-4 text-xs opacity-70">
+                                            <%= new Date(u.lastChange).toLocaleDateString(currentLng==='fr' ? 'fr-FR'
+                                                : 'en-US' ) %>
+                                        </td>
+                                        <td class="px-6 py-4 text-right flex justify-end gap-2">
+                                            <form action="<%= baseUrl %>/admin/reset-password" method="POST"
+                                                onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_reset', { name: u.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                <input type="hidden" name="userId" value="<%= u._id %>">
+                                                <button type="submit"
+                                                    class="text-yellow-600 bg-yellow-100 dark:bg-yellow-500/10 p-2 rounded-lg transition-colors hover:brightness-110"
+                                                    title="<%= t('admin.tooltips.reset_password') %>">
+                                                    <i class="fa-solid fa-key"></i>
+                                                </button>
+                                            </form>
+                                            <% if (u._id.toString() !==user._id.toString()) { %>
+                                                <form action="<%= baseUrl %>/admin/delete-user" method="POST"
+                                                    onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_delete_user', { name: u.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                    <input type="hidden" name="userId" value="<%= u._id %>">
+                                                    <button type="submit"
+                                                        class="text-red-600 bg-red-100 dark:bg-red-500/10 p-2 rounded-lg transition-colors hover:brightness-110"
+                                                        title="<%= t('admin.tooltips.delete') %>">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                                <% } %>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="md:hidden space-y-4">
+                        <% users.forEach(u=> { %>
+                            <div class="card-theme p-5 rounded-2xl shadow-sm space-y-4 transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <img src="<%= baseUrl + u.img %>"
+                                        class="w-12 h-12 rounded-full border border-black/10 dark:border-white/10 object-cover">
+                                    <div class="overflow-hidden">
+                                        <p class="font-bold truncate">
+                                            <%= u.username %>
+                                        </p>
+                                        <p class="text-xs opacity-60 truncate">
+                                            <%= u.email %>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="flex items-center justify-between pt-4 border-t border-black/5 dark:border-white/5">
+                                    <div class="flex flex-col">
+                                        <span class="text-[9px] opacity-50 uppercase font-bold tracking-wider">
+                                            <%= t('admin.table.last_change') %>
+                                        </span>
+                                        <span class="text-xs opacity-70">
+                                            <%= new Date(u.lastChange).toLocaleDateString(currentLng==='fr' ? 'fr-FR'
+                                                : 'en-US' ) %>
+                                        </span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <form action="<%= baseUrl %>/admin/reset-password" method="POST"
+                                            onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_reset', { name: u.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                            <input type="hidden" name="userId" value="<%= u._id %>">
+                                            <button type="submit"
+                                                class="text-yellow-600 bg-yellow-50 dark:bg-yellow-500/10 px-4 py-2 rounded-xl border border-yellow-200 dark:border-yellow-500/20 text-sm font-bold">
+                                                <i class="fa-solid fa-key"></i>
+                                            </button>
+                                        </form>
+                                        <% if (u._id.toString() !==user._id.toString()) { %>
+                                            <form action="<%= baseUrl %>/admin/delete-user" method="POST"
+                                                onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_delete_user', { name: u.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                <input type="hidden" name="userId" value="<%= u._id %>">
+                                                <button type="submit"
+                                                    class="text-red-600 bg-red-50 dark:bg-red-500/10 px-4 py-2 rounded-xl border border-red-200 dark:border-red-500/20 text-sm font-bold">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
+                                            <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }) %>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="flex items-center gap-4 mb-6">
+                        <h2 class="text-xl font-bold flex items-center gap-2 transition-colors whitespace-nowrap">
+                            <i class="fa-solid fa-database text-primary-theme"></i>
+                            <%= t('admin.backup.section_title') %>
+                        </h2>
+                        <div class="flex-grow border-t border-black/10 dark:border-white/10 transition-colors"></div>
+                    </div>
+                    <p class="text-sm opacity-50 -mt-3 mb-6">
+                        <%= t('admin.backup.section_subtitle') %>
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+                        <!-- Automated backup settings -->
+                        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-clock text-primary-theme"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold"><%= t('admin.backup.schedule.title') %></h3>
+                                    <p class="text-xs opacity-50"><%= t('admin.backup.schedule.subtitle') %></p>
+                                </div>
+                            </div>
+
+                            <form action="<%= baseUrl %>/backup/schedule" method="POST" class="space-y-5">
+                                <label class="group flex items-center justify-between p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-transparent hover:border-primary-theme/30 has-[:checked]:bg-green-500/10 has-[:checked]:border-green-500/30 transition-all cursor-pointer">
+                                    <span class="text-sm font-bold opacity-70 group-hover:opacity-100 group-has-[:checked]:opacity-100 transition-opacity">
+                                        <%= t('admin.backup.schedule.enable_label') %>
+                                    </span>
+                                    <div class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" name="enabled" value="on" <%= backupSettings.enabled ? 'checked' : '' %> class="sr-only peer">
+                                        <div class="w-11 h-6 bg-black/10 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                    </div>
+                                </label>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="space-y-1">
+                                        <label class="block text-[10px] font-black uppercase tracking-widest opacity-50">
+                                            <%= t('admin.backup.schedule.time_label') %>
+                                        </label>
+                                        <input type="time" name="time" value="<%= backupSettings.time || '03:00' %>"
+                                            class="w-full bg-black/5 dark:bg-white/5 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-primary-theme/30">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="block text-[10px] font-black uppercase tracking-widest opacity-50">
+                                            <%= t('admin.backup.schedule.interval_label') %>
+                                        </label>
+                                        <input type="number" name="intervalDays" min="1" max="30" value="<%= backupSettings.intervalDays || 1 %>"
+                                            class="w-full bg-black/5 dark:bg-white/5 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-primary-theme/30">
+                                    </div>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label class="block text-[10px] font-black uppercase tracking-widest opacity-50">
+                                        <%= t('admin.backup.schedule.retention_label') %>
+                                    </label>
+                                    <input type="number" name="retention" min="1" max="30" value="<%= backupSettings.retention || 3 %>"
+                                        class="w-full bg-black/5 dark:bg-white/5 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-primary-theme/30">
+                                </div>
+
+                                <p class="text-[10px] opacity-40 pt-1">
+                                    <%= t('admin.backup.schedule.last_run_label') %>:
+                                    <%= backupSettings.lastRunAt ? new Date(backupSettings.lastRunAt).toLocaleString(currentLng === 'de' ? 'de-DE' : 'en-US') : t('admin.backup.schedule.never') %>
+                                </p>
+
+                                <button type="submit"
+                                    class="w-full bg-primary-theme text-white font-bold py-3 rounded-xl hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-save"></i>
+                                    <%= t('admin.backup.schedule.save_btn') %>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Existing scheduled backups -->
+                        <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors flex flex-col">
+                            <div class="flex items-center justify-between gap-3 mb-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-clock-rotate-left text-primary-theme"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold"><%= t('admin.backup.list.title') %></h3>
+                                        <p class="text-xs opacity-50"><%= t('admin.backup.list.subtitle') %></p>
+                                    </div>
+                                </div>
+                                <button onclick="createBackupNow()" id="btnCreateBackupNow" title="<%= t('admin.backup.list.create_now_btn') %>"
+                                    class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white rounded-xl transition-all">
+                                    <i class="fa-solid fa-plus" id="iconCreateBackupNow"></i>
+                                </button>
+                            </div>
+
+                            <div id="backupList" class="space-y-2 flex-grow overflow-y-auto max-h-72 custom-scrollbar">
+                                <% if (backups.length === 0) { %>
+                                    <p class="text-xs opacity-50 italic" id="backupListEmpty"><%= t('admin.backup.list.empty') %></p>
+                                <% } else { %>
+                                    <% backups.forEach(b => { %>
+                                        <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-black/5 dark:bg-white/5" data-filename="<%= b.name %>">
+                                            <div class="overflow-hidden">
+                                                <div class="text-xs font-bold truncate">
+                                                    <%= new Date(b.createdAt).toLocaleString(currentLng === 'de' ? 'de-DE' : 'en-US') %>
+                                                </div>
+                                                <div class="text-[10px] opacity-50">
+                                                    <%= (b.size / 1024).toFixed(1) %> KB
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-1 flex-shrink-0">
+                                                <button onclick="restoreBackup('<%= b.name %>')" title="<%= t('admin.backup.list.restore_btn') %>"
+                                                    class="w-8 h-8 flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-yellow-500 hover:text-white rounded-lg transition-colors">
+                                                    <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                                                </button>
+                                                <button onclick="deleteBackupFile('<%= b.name %>')" title="<%= t('admin.backup.list.delete_btn') %>"
+                                                    class="w-8 h-8 flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
+                                                    <i class="fa-solid fa-trash text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manual backup -->
+                    <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors">
+                        <h3 class="font-bold mb-1"><%= t('admin.backup.manual_title') %></h3>
+                        <p class="text-sm opacity-60 mb-4"><%= t('admin.backup.manual_subtitle') %></p>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="<%= baseUrl %>/backup/export"
+                                class="flex-1 sm:flex-none bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-file-export"></i>
+                                <%= t('admin.backup.export_btn') %>
+                            </a>
+                            <label
+                                class="flex-1 sm:flex-none bg-black/5 dark:bg-white/5 hover:bg-yellow-500 hover:text-white px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                <i class="fa-solid fa-file-import"></i>
+                                <%= t('admin.backup.import_btn') %>
+                                    <input type="file" id="backupInput" class="hidden" accept=".json">
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="flex items-center gap-4 mb-6">
+                        <h2 class="text-xl font-bold flex items-center gap-2 transition-colors whitespace-nowrap">
+                            <i class="fa-solid fa-wrench text-primary-theme"></i>
+                            <%= t('admin.maintenance.title') %>
+                        </h2>
+                        <div class="flex-grow border-t border-black/10 dark:border-white/10 transition-colors"></div>
+                    </div>
+                    <p class="text-sm opacity-50 -mt-3 mb-6">
+                        <%= t('admin.maintenance.subtitle') %>
+                    </p>
+
+                    <!-- VHS Refresh Block -->
+                    <div class="card-theme rounded-3xl p-6 md:p-8 shadow-sm transition-colors mb-6">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div class="max-w-xl">
+                                <h2 class="text-lg font-bold flex items-center gap-2 mb-2">
+                                    <i class="fa-solid fa-arrows-rotate text-primary-theme"></i>
+                                    <%= t('admin.maintenance.refresh_all_title') %>
+                                </h2>
+                                <p class="text-xs opacity-60 leading-relaxed mb-4">
+                                    <%= t('admin.maintenance.refresh_all_subtitle') %>
+                                </p>
+                                <div class="flex flex-col gap-2">
+                                    <label
+                                        class="block text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">
+                                        <%= t('admin.maintenance.mode_label') || 'Mode' %>
+                                    </label>
+                                    <div class="relative group">
+                                        <select id="refreshModeVHS"
+                                            class="select-theme bg-black/5 dark:bg-white/5 border border-transparent text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary-theme focus:border-primary-theme block w-full pl-3 py-3 transition-colors outline-none cursor-pointer">
+                                            <option class="bg-white dark:bg-[#1a1a1a]" value="all">
+                                                <%= t('admin.maintenance.mode_all') %>
+                                            </option>
+                                            <option class="bg-white dark:bg-[#1a1a1a]" value="missing" selected>
+                                                <%= t('admin.maintenance.mode_missing') %>
+                                            </option>
+                                        </select>
+                                        <i class="fa-solid fa-chevron-down text-[10px] opacity-20 group-hover:opacity-60 transition-all absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <button id="btnRefreshVHS" onclick="startMetadataRefresh('VHS')"
+                                    class="w-full sm:w-auto bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-8 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 border border-black/10 dark:border-white/10 shadow-sm">
+                                    <i class="fa-solid fa-play" id="iconRefreshVHS"></i>
+                                    <span id="textRefreshVHS">
+                                        <%= t('admin.maintenance.refresh_all_btn') %>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="progressContainerVHS"
+                            class="hidden mt-6 space-y-3 p-4 bg-black/5 dark:bg-white/5 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-500">
+                            <div
+                                class="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest opacity-60">
+                                <span id="progressTitleVHS">
+                                    <%= t('admin.maintenance.status_init') %>
+                                </span>
+                                <span id="progressPercentVHS">0%</span>
+                            </div>
+                            <div class="w-full bg-black/10 dark:bg-white/10 rounded-full h-2 overflow-hidden">
+                                <div id="progressBarVHS"
+                                    class="bg-primary-theme h-full transition-all duration-300 w-0"></div>
+                            </div>
+                            <p id="progressItemVHS" class="text-[10px] opacity-40 font-mono truncate"></p>
+                        </div>
+                    </div>
+
+                </section>
+
+
+                <section>
+                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2 transition-colors">
+                        <i class="fa-solid fa-ban text-red-500"></i>
+                        <%= t('admin.blocked_ips_title', { count: blockedIps.length }) %>
+                    </h2>
+                    <% if(blockedIps.length> 0) { %>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <% blockedIps.forEach(ip=> { %>
+                                <div
+                                    class="card-theme p-5 rounded-2xl flex justify-between items-center group hover:border-red-500/50 transition-colors shadow-sm">
+                                    <div class="overflow-hidden">
+                                        <span class="block font-mono font-bold truncate">
+                                            <%= ip.ip %>
+                                        </span>
+                                        <span class="text-[10px] opacity-50 uppercase tracking-tighter">
+                                            <%= new Date(ip.createdAt).toLocaleDateString(currentLng==='fr' ? 'fr-FR'
+                                                : 'en-US' ) %>
+                                        </span>
+                                    </div>
+                                    <form action="<%= baseUrl %>/admin/unblock-ip" method="POST">
+                                        <input type="hidden" name="ipId" value="<%= ip._id %>">
+                                        <button type="submit"
+                                            class="h-10 w-10 flex items-center justify-center bg-black/5 dark:bg-white/5 opacity-60 hover:text-green-500 hover:opacity-100 rounded-xl transition-colors"
+                                            title="<%= t('admin.tooltips.unblock') %>">
+                                            <i class="fa-solid fa-lock-open"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <% }) %>
+                        </div>
+                        <% } else { %>
+                            <div
+                                class="p-12 border-2 border-dashed border-black/10 dark:border-white/10 rounded-3xl text-center opacity-50 transition-colors">
+                                <i class="fa-solid fa-shield-check text-4xl mb-3 opacity-30 block"></i>
+                                <%= t('admin.no_blocked_ips') %>
+                            </div>
+                            <% } %>
+                </section>
+
+                <section>
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold flex items-center gap-2 transition-colors">
+                            <i class="fa-solid fa-satellite-dish text-primary-theme"></i>
+                            <%= t('admin.logs_title') %>
+                        </h2>
+                        <div class="md:hidden text-[10px] uppercase font-bold opacity-50 flex items-center gap-1">
+                            <i class="fa-solid fa-left-right animate-pulse"></i> Scroll
+                        </div>
+                    </div>
+                    <div class="card-theme rounded-2xl overflow-hidden shadow-lg transition-colors">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm opacity-80 min-w-[700px]">
+                                <thead
+                                    class="bg-black/5 dark:bg-white/5 text-xs uppercase opacity-70 transition-colors">
+                                    <tr>
+                                        <th class="px-6 py-4">
+                                            <%= t('admin.table.user') %>
+                                        </th>
+                                        <th class="px-6 py-4">
+                                            <%= t('admin.table.loc') %>
+                                        </th>
+                                        <th class="px-6 py-4">
+                                            <%= t('admin.table.ip_device') %>
+                                        </th>
+                                        <th class="px-6 py-4">
+                                            <%= t('admin.table.date') %>
+                                        </th>
+                                        <th class="px-6 py-4 text-right">
+                                            <%= t('admin.table.security') %>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-black/5 dark:divide-white/5 transition-colors">
+                                    <% logs.forEach(log=> { %>
+                                        <tr class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
+                                            <td class="px-6 py-4">
+                                                <div class="font-bold">
+                                                    <%= log.username %>
+                                                </div>
+                                                <div class="text-[10px] opacity-60 truncate">
+                                                    <%= log.email %>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <% if(log.country && log.country !=='XX' ) { %>
+                                                    <div class="flex items-center gap-2">
+                                                        <img src="https://flagcdn.com/24x18/<%= log.country.toLowerCase() %>.png"
+                                                            class="rounded-sm shadow-sm" alt="Flag">
+                                                        <span class="font-mono text-xs">
+                                                            <%= log.country %>
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-[10px] opacity-60 uppercase">
+                                                        <%= log.city %>
+                                                    </div>
+                                                    <% } else { %>
+                                                        <span class="opacity-50 text-xs"><i
+                                                                class="fa-solid fa-globe"></i>
+                                                            <%= t('admin.local_connection') %>
+                                                        </span>
+                                                        <% } %>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="text-primary-theme font-mono text-xs mb-1">
+                                                    <%= log.ip %>
+                                                </div>
+                                                <div class="text-[10px] opacity-60 max-w-[120px] truncate"
+                                                    title="<%= log.userAgent %>">
+                                                    <%= log.userAgent.includes('Windows') ? 'Windows' :
+                                                        (log.userAgent.includes('Mac') ? 'Mac' : 'Mobile/Linux' ) %>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 text-[10px] whitespace-nowrap">
+                                                <% const diff=Math.floor((new Date() - new Date(log.timestamp)) /
+                                                    60000); let timeText=diff < 60 ? t('admin.time_ago_min', { count:
+                                                    diff }) : new
+                                                    Date(log.timestamp).toLocaleDateString(currentLng==='fr' ? 'fr-FR'
+                                                    : 'en-US' ); %>
+                                                    <%= timeText %>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <div class="flex justify-end gap-2 opacity-100 transition-opacity">
+                                                    <% if (log.user) { %>
+                                                        <form action="<%= baseUrl %>/admin/reset-password" method="POST"
+                                                            onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_reset', { name: log.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                            <input type="hidden" name="userId" value="<%= log.user %>">
+                                                            <button type="submit"
+                                                                class="bg-black/5 dark:bg-white/5 hover:bg-yellow-500 hover:text-white p-2 rounded-xl border border-transparent transition-colors"
+                                                                title="<%= t('admin.tooltips.reset_password') %>">
+                                                                <i class="fa-solid fa-key"></i>
+                                                            </button>
+                                                        </form>
+                                                        <% } %>
+                                                            <form action="<%= baseUrl %>/admin/block-ip" method="POST"
+                                                                onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_block_ip', { ip: log.ip })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                                <input type="hidden" name="ipAddress"
+                                                                    value="<%= log.ip %>">
+                                                                <button type="submit"
+                                                                    class="bg-black/5 dark:bg-white/5 hover:bg-red-600 hover:text-white p-2 rounded-xl border border-transparent transition-colors"
+                                                                    title="<%= t('admin.tooltips.block') %>">
+                                                                    <i class="fa-solid fa-ban"></i>
+                                                                </button>
+                                                            </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="flex items-center gap-4 mb-6">
+                        <h2 class="text-xl font-bold flex items-center gap-2 text-red-500">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <%= t('admin.danger.title') %>
+                        </h2>
+                        <div class="flex-grow border-t border-red-500/20"></div>
+                    </div>
+                    <p class="text-sm opacity-50 -mt-3 mb-6">
+                        <%= t('admin.danger.subtitle') %>
+                    </p>
+
+                    <div class="border-2 border-red-500/30 rounded-3xl divide-y divide-red-500/20 overflow-hidden">
+                        <div class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h3 class="font-bold"><%= t('admin.danger.wipe_collection_title') %></h3>
+                                <p class="text-sm opacity-60"><%= t('admin.danger.wipe_collection_desc', { count: collectionCount }) %></p>
+                            </div>
+                            <div class="flex flex-col gap-1.5 w-full md:w-auto">
+                                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                    <input type="text" id="wipeCollectionInput" oninput="checkDangerInput('Collection')"
+                                        placeholder="<%= t('admin.danger.wipe_collection_confirm_word') %>"
+                                        class="bg-black/5 dark:bg-white/5 border border-red-500/20 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-red-500/30 w-full sm:w-56">
+                                    <button id="btnWipeCollection" onclick="wipeDanger('Collection')" disabled
+                                        class="bg-red-500/10 text-red-500 border border-red-500/20 font-bold px-4 py-2.5 rounded-xl text-sm whitespace-nowrap transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-500 hover:text-white disabled:hover:bg-red-500/10 disabled:hover:text-red-500">
+                                        <%= t('admin.danger.wipe_collection_btn') %>
+                                    </button>
+                                </div>
+                                <span class="text-[10px] opacity-40"><%= t('admin.danger.confirm_hint', { word: t('admin.danger.wipe_collection_confirm_word') }) %></span>
+                            </div>
+                        </div>
+
+                        <div class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h3 class="font-bold"><%= t('admin.danger.wipe_wishlist_title') %></h3>
+                                <p class="text-sm opacity-60"><%= t('admin.danger.wipe_wishlist_desc', { count: wishlistCount }) %></p>
+                            </div>
+                            <div class="flex flex-col gap-1.5 w-full md:w-auto">
+                                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                    <input type="text" id="wipeWishlistInput" oninput="checkDangerInput('Wishlist')"
+                                        placeholder="<%= t('admin.danger.wipe_wishlist_confirm_word') %>"
+                                        class="bg-black/5 dark:bg-white/5 border border-red-500/20 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-red-500/30 w-full sm:w-56">
+                                    <button id="btnWipeWishlist" onclick="wipeDanger('Wishlist')" disabled
+                                        class="bg-red-500/10 text-red-500 border border-red-500/20 font-bold px-4 py-2.5 rounded-xl text-sm whitespace-nowrap transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-500 hover:text-white disabled:hover:bg-red-500/10 disabled:hover:text-red-500">
+                                        <%= t('admin.danger.wipe_wishlist_btn') %>
+                                    </button>
+                                </div>
+                                <span class="text-[10px] opacity-40"><%= t('admin.danger.confirm_hint', { word: t('admin.danger.wipe_wishlist_confirm_word') }) %></span>
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <h3 class="font-bold"><%= t('admin.delete_last.title') %></h3>
+                                    <p class="text-sm opacity-60"><%= t('admin.delete_last.subtitle') %></p>
+                                </div>
+                                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+                                    <input type="number" id="deleteCount" min="1" placeholder="<%= t('admin.delete_last.count') %>"
+                                        class="bg-black/5 dark:bg-white/5 border border-red-500/20 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-red-500/30 w-full sm:w-56">
+                                    <button onclick="confirmDeleteLast()"
+                                        class="bg-red-500/10 text-red-500 border border-red-500/20 font-bold px-4 py-2.5 rounded-xl text-sm whitespace-nowrap transition-all hover:bg-red-500 hover:text-white flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-trash"></i>
+                                        <%= t('admin.delete_last.btn') %>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="deleteLastError" class="hidden mt-4 bg-red-500/10 border border-red-500/20
+                            text-red-400 p-4 rounded-xl text-sm flex gap-3">
+                                <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+                                <span id="deleteLastErrorText" class="leading-relaxed"></span>
+                            </div>
+
+                            <div id="deleteLastSuccess" class="hidden mt-4 bg-green-500/10 border border-green-500/20
+                            text-green-400 p-4 rounded-xl text-sm flex gap-3">
+                                <i class="fa-solid fa-check-circle mt-0.5"></i>
+                                <span id="deleteLastSuccessText" class="leading-relaxed"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+    </div>
+
+
+    <div id="addUserModal"
+        class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
+        <div class="absolute inset-0" onclick="toggleModal('addUserModal')"></div>
+        <div
+            class="card-theme relative w-full max-w-md rounded-[2.5rem] p-8 md:p-10 shadow-2xl transition-all animate-scale-in">
+            <button onclick="toggleModal('addUserModal')"
+                class="absolute top-6 right-6 opacity-40 hover:opacity-100 hover:rotate-90 transition-all">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
+            <h3 class="text-2xl font-black mb-8">
+                <%= t('admin.modal.title') %>
+            </h3>
+            <form action="<%= baseUrl %>/admin/add-user" method="POST" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">
+                        <%= t('admin.modal.username') %>
+                    </label>
+                    <input type="text" name="username" required placeholder="Ex: John"
+                        class="w-full bg-black/5 dark:bg-white/5 border-2 border-transparent focus:border-primary-theme/30 rounded-2xl p-4 outline-none transition-all placeholder:opacity-30">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">
+                        <%= t('admin.modal.email') %>
+                    </label>
+                    <input type="email" name="email" required placeholder="email@domaine.com"
+                        class="w-full bg-black/5 dark:bg-white/5 border-2 border-transparent focus:border-primary-theme/30 rounded-2xl p-4 outline-none transition-all placeholder:opacity-30">
+                </div>
+                <button type="submit"
+                    class="w-full bg-primary-theme text-white font-black py-5 rounded-2xl shadow-lg shadow-primary-theme/20 hover:brightness-110 active:scale-95 transition-all mt-4">
+                    <%= t('admin.modal.submit') %>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+        <script src="<%= baseUrl %>/socket.io/socket.io.js"></script>
+        <script>
+            function toggleModal(id) {
+                const modal = document.getElementById(id);
+                modal.classList.toggle('hidden');
+                document.body.style.overflow = modal.classList.contains('hidden') ? 'auto' : 'hidden';
+            }
+
+            document.getElementById('backupInput').onchange = function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (confirm(<%- JSON.stringify(t('admin.backup.confirm_import')) %>)) {
+                    const reader = new FileReader();
+                    reader.onload = async (event) => {
+                        try {
+                            const backupData = JSON.parse(event.target.result);
+                            const response = await fetch('<%= baseUrl %>/backup/import', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(backupData)
+                            });
+                            if (response.ok) {
+                                alert(<%- JSON.stringify(t('admin.backup.import_success')) %>);
+                                window.location.href = '<%= baseUrl %>/login';
+                            } else {
+                                alert(<%- JSON.stringify(t('admin.backup.import_error')) %>);
+                            }
+                        } catch (err) {
+                            alert(<%- JSON.stringify(t('admin.backup.json_error')) %>);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+                this.value = '';
+            };
+
+            const socket = io({
+                path: '<%= baseUrl %>/socket.io',
+            });
+
+            function interpolate(str, params) {
+                return str.replace(/{{(.*?)}}/g, (_, key) => {
+                    return params[key.trim()] ?? '';
+                });
+            }
+
+            window.translations = {
+                areyousure: <%- JSON.stringify(t('admin.areyousure')) %>,
+                deleteConfirm: <%- JSON.stringify(t('admin.delete_confirm')) %>,
+                refreshAllConfirm: <%- JSON.stringify(t('admin.maintenance.refresh_all_confirm')) %>,
+                statusStarting: <%- JSON.stringify(t('admin.maintenance.status_starting')) %>,
+                statusInit: <%- JSON.stringify(t('admin.maintenance.status_init')) %>,
+                statusProcessing: <%- JSON.stringify(t('admin.maintenance.status_processing')) %>,
+                statusFinished: <%- JSON.stringify(t('admin.maintenance.status_finished')) %>,
+                statusError: <%- JSON.stringify(t('admin.maintenance.status_error')) %>,
+                itemsUpdated: <%- JSON.stringify(t('admin.modal.import_done')) %>,
+                backupRestoreConfirm: <%- JSON.stringify(t('admin.backup.list.restore_confirm')) %>,
+                backupDeleteConfirm: <%- JSON.stringify(t('admin.backup.list.delete_confirm')) %>,
+                backupListEmpty: <%- JSON.stringify(t('admin.backup.list.empty')) %>,
+                dangerWipeSuccess: <%- JSON.stringify(t('admin.danger.wipe_success')) %>,
+                dangerCollectionWord: <%- JSON.stringify(t('admin.danger.wipe_collection_confirm_word')) %>,
+                dangerWishlistWord: <%- JSON.stringify(t('admin.danger.wipe_wishlist_confirm_word')) %>
+            };
+
+            let activeRefreshKind = null;
+
+            async function startMetadataRefresh(kind = 'VHS') {
+                if (!confirm(window.translations.refreshAllConfirm)) return;
+
+                activeRefreshKind = kind;
+
+                const mode = document.getElementById('refreshMode' + kind).value;
+                const btn = document.getElementById('btnRefresh' + kind);
+                const icon = document.getElementById('iconRefresh' + kind);
+                const text = document.getElementById('textRefresh' + kind);
+                const progressContainer = document.getElementById('progressContainer' + kind);
+
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                icon.className = 'fa-solid fa-spinner fa-spin';
+                text.innerText = window.translations.statusStarting;
+                progressContainer.classList.remove('hidden');
+
+                try {
+                    const url = '<%= baseUrl %>/admin/refresh-all-vhs-metadata';
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mode })
+                    });
+
+                    if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.error || window.translations.statusError);
+                    }
+                } catch (err) {
+                    alert(err.message);
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    icon.className = 'fa-solid fa-play';
+                    text.innerText = <%- JSON.stringify(t("admin.maintenance.refresh_all_btn")) %>;
+                    progressContainer.classList.add('hidden');
+                    activeRefreshKind = null;
+                }
+            }
+
+            socket.on('refresh_all_progress', (data) => {
+                if (!activeRefreshKind) return;
+                const k = activeRefreshKind;
+                const percent = Math.round((data.current / data.total) * 100);
+                const statusText = window.translations.statusProcessing.replace('{{current}}', data.current).replace('{{total}}', data.total);
+
+                document.getElementById('progressBar' + k).style.width = `${percent}%`;
+                document.getElementById('progressPercent' + k).innerText = `${percent}%`;
+                document.getElementById('progressTitle' + k).innerText = statusText;
+                document.getElementById('progressItem' + k).innerText = data.title;
+                document.getElementById('textRefresh' + k).innerText = statusText;
+            });
+
+            socket.on('refresh_all_finished', (data) => {
+                if (!activeRefreshKind) return;
+                const k = activeRefreshKind;
+                document.getElementById('progressTitle' + k).innerText = window.translations.statusFinished;
+                document.getElementById('textRefresh' + k).innerText = window.translations.statusFinished;
+                document.getElementById('iconRefresh' + k).className = 'fa-solid fa-check text-green-500';
+
+                setTimeout(() => {
+                    alert(`${data.count} ${window.translations.itemsUpdated}`);
+                    window.location.reload();
+                }, 1000);
+            });
+
+            async function confirmDeleteLast() {
+                const count = parseInt(document.getElementById('deleteCount')?.value);
+                const kind = 'VHS';
+                const kindLabel = <%- JSON.stringify(t('media.vhs')) %>;
+
+                if (!count || count < 1) return;
+
+                const message = interpolate(window.translations.areyousure, {
+                    count,
+                    kindLabel
+                });
+
+                const confirmed = confirm(message);
+                if (!confirmed) return;
+
+                const errorBox = document.getElementById('deleteLastError');
+                const errorText = document.getElementById('deleteLastErrorText');
+                const successBox = document.getElementById('deleteLastSuccess');
+                const successText = document.getElementById('deleteLastSuccessText');
+                errorBox.classList.add('hidden');
+                successBox.classList.add('hidden');
+
+                try {
+                    const response = await fetch('<%= baseUrl %>/admin/delete-last-items', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ count, kind })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Erreur');
+
+                    successText.innerText = interpolate(
+                        window.translations.deleteConfirm,
+                        { count: data.deleted }
+                    );
+                    successBox.classList.remove('hidden');
+                    document.getElementById('deleteCount').value = '';
+                } catch (err) {
+                    errorText.innerText = err.message;
+                    errorBox.classList.remove('hidden');
+                }
+            }
+
+            function formatBackupDate(iso) {
+                return new Date(iso).toLocaleString('<%= currentLng === "de" ? "de-DE" : "en-US" %>');
+            }
+
+            function renderBackupList(backups) {
+                const list = document.getElementById('backupList');
+                if (!backups || backups.length === 0) {
+                    list.innerHTML = `<p class="text-xs opacity-50 italic" id="backupListEmpty">${window.translations.backupListEmpty}</p>`;
+                    return;
+                }
+                list.innerHTML = backups.map(b => `
+                    <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-black/5 dark:bg-white/5" data-filename="${b.name}">
+                        <div class="overflow-hidden">
+                            <div class="text-xs font-bold truncate">${formatBackupDate(b.createdAt)}</div>
+                            <div class="text-[10px] opacity-50">${(b.size / 1024).toFixed(1)} KB</div>
+                        </div>
+                        <div class="flex gap-1 flex-shrink-0">
+                            <button onclick="restoreBackup('${b.name}')" class="w-8 h-8 flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-yellow-500 hover:text-white rounded-lg transition-colors">
+                                <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                            </button>
+                            <button onclick="deleteBackupFile('${b.name}')" class="w-8 h-8 flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-red-600 hover:text-white rounded-lg transition-colors">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            async function createBackupNow() {
+                const btn = document.getElementById('btnCreateBackupNow');
+                const icon = document.getElementById('iconCreateBackupNow');
+                btn.disabled = true;
+                icon.className = 'fa-solid fa-circle-notch fa-spin';
+                try {
+                    const res = await fetch('<%= baseUrl %>/backup/backups/create', { method: 'POST' });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Error');
+                    renderBackupList(data.backups);
+                } catch (err) {
+                    alert(err.message);
+                } finally {
+                    btn.disabled = false;
+                    icon.className = 'fa-solid fa-plus';
+                }
+            }
+
+            async function restoreBackup(filename) {
+                if (!confirm(window.translations.backupRestoreConfirm)) return;
+                try {
+                    const res = await fetch(`<%= baseUrl %>/backup/backups/${encodeURIComponent(filename)}/restore`, { method: 'POST' });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Error');
+                    window.location.href = '<%= baseUrl %>/login';
+                } catch (err) {
+                    alert(err.message);
+                }
+            }
+
+            async function deleteBackupFile(filename) {
+                if (!confirm(window.translations.backupDeleteConfirm)) return;
+                try {
+                    const res = await fetch(`<%= baseUrl %>/backup/backups/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Error');
+                    document.querySelector(`#backupList [data-filename="${filename}"]`)?.remove();
+                    if (!document.querySelector('#backupList [data-filename]')) renderBackupList([]);
+                } catch (err) {
+                    alert(err.message);
+                }
+            }
+
+            // Danger Zone: wipe buttons stay disabled until the exact
+            // confirmation phrase is typed, mirroring GitHub's "type to confirm".
+            function checkDangerInput(kind) {
+                const input = document.getElementById('wipe' + kind + 'Input');
+                const btn = document.getElementById('btnWipe' + kind);
+                const required = kind === 'Collection' ? window.translations.dangerCollectionWord : window.translations.dangerWishlistWord;
+                btn.disabled = input.value !== required;
+            }
+
+            async function wipeDanger(kind) {
+                const input = document.getElementById('wipe' + kind + 'Input');
+                const btn = document.getElementById('btnWipe' + kind);
+                const endpoint = kind === 'Collection' ? '/admin/danger/wipe-collection' : '/admin/danger/wipe-wishlist';
+
+                btn.disabled = true;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+                try {
+                    const res = await fetch('<%= baseUrl %>' + endpoint, { method: 'POST' });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Error');
+                    alert(interpolate(window.translations.dangerWipeSuccess, { count: data.deleted }));
+                    window.location.reload();
+                } catch (err) {
+                    alert(err.message);
+                    btn.innerHTML = originalText;
+                    input.value = '';
+                    checkDangerInput(kind);
+                }
+            }
+        </script>

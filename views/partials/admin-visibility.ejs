@@ -1,0 +1,215 @@
+<section class="card-theme rounded-3xl p-6 shadow-sm mb-10 transition-colors">
+    <div class="flex flex-col gap-8">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-primary-theme/10 text-primary-theme flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-eye-slash text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-sm font-black uppercase tracking-widest opacity-80">
+                    <%= t('admin.visibility.title') || 'Visibility Settings' %>
+                </h2>
+                <p class="text-xs opacity-50">
+                    <%= t('admin.visibility.subtitle') || 'Hide elements' %>
+                </p>
+            </div>
+        </div>
+
+        <form action="<%= baseUrl %>/admin/visibility/save" method="POST" class="space-y-6">
+            <!-- Apply to admin toggle -->
+            <label class="group flex items-center justify-between p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-transparent hover:border-primary-theme/30 has-[:checked]:bg-green-500/10 has-[:checked]:border-green-500/30 transition-all cursor-pointer">
+                <div>
+                    <div class="text-sm font-bold opacity-70 group-hover:opacity-100 group-has-[:checked]:opacity-100 transition-opacity">
+                        <%= t('admin.visibility.apply_to_admin') || 'Apply to Admin' %>
+                    </div>
+                    <div class="text-[10px] opacity-50">
+                        <%= t('admin.visibility.apply_to_admin_desc') || 'Hide elements for you too' %>
+                    </div>
+                </div>
+                <div class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="applyToAdmin" value="on" <%= visibilitySettings.visibility && visibilitySettings.visibility.applyToAdmin ? 'checked' : '' %> class="sr-only peer">
+                    <div class="w-11 h-6 bg-black/10 dark:bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                </div>
+            </label>
+
+            <!-- Genres -->
+            <div>
+                <h3 class="text-sm font-bold opacity-80 mb-3"><%= t('admin.visibility.hidden_genres') || 'Hidden Genres' %></h3>
+                <div class="max-h-60 overflow-y-auto p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 space-y-4">
+                    <% Object.keys(allGenres).forEach(kind => { %>
+                        <div>
+                            <div class="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2 border-b border-black/5 dark:border-white/5 pb-1">
+                                <%= t('media.' + kind.toLowerCase()) || kind %>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <% allGenres[kind].forEach(genre => { %>
+                                    <label class="cursor-pointer group select-none">
+                                        <input type="checkbox" name="hiddenGenres" value="<%= genre %>" <%= visibilitySettings.visibility && visibilitySettings.visibility.hiddenGenres && visibilitySettings.visibility.hiddenGenres.includes(genre) ? 'checked' : '' %> class="sr-only peer">
+                                        <div class="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg border border-black/10 dark:border-white/10 opacity-70 peer-checked:opacity-100 peer-checked:bg-red-500/10 peer-checked:text-red-500 peer-checked:border-red-500/30 hover:bg-black/5 dark:hover:bg-white/5 hover:opacity-100 transition-all">
+                                            <i class="fa-solid fa-eye-slash text-[9px] hidden peer-checked:inline-block"></i>
+                                            <%= genre %>
+                                        </div>
+                                    </label>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% }) %>
+                    
+                    <% if (Object.keys(allGenres).length === 0) { %>
+                        <p class="text-xs opacity-50 italic"><%= t('admin.visibility.no_genres') || 'No genres found in collection.' %></p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Specific Items -->
+            <div>
+                <h3 class="text-sm font-bold opacity-80 mb-3"><%= t('admin.visibility.hidden_items') || 'Hidden Items' %></h3>
+                <div class="relative">
+                    <input type="text" id="itemSearch" class="w-full bg-black/5 dark:bg-white/5 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-primary-theme/30" placeholder="<%= t('admin.visibility.search_placeholder') || 'Search item...' %>" autocomplete="off">
+                    <div id="itemSearchResults" class="absolute z-10 w-full mt-1 bg-white dark:bg-[#1a1a1a] border border-black/10 dark:border-white/10 rounded-xl shadow-xl max-h-60 overflow-y-auto hidden"></div>
+                </div>
+                
+                <input type="hidden" name="hiddenItems" id="hiddenItemsInput" value="<%= JSON.stringify((visibilitySettings.visibility && visibilitySettings.visibility.hiddenItems ? visibilitySettings.visibility.hiddenItems.map(i => i._id.toString()) : [])) %>">
+                
+                <div id="hiddenItemsContainer" class="mt-4 space-y-2">
+                    <% if (visibilitySettings.visibility && visibilitySettings.visibility.hiddenItems && visibilitySettings.visibility.hiddenItems.length > 0) { %>
+                        <% visibilitySettings.visibility.hiddenItems.forEach(item => { %>
+                            <div class="flex items-center justify-between p-3 rounded-xl bg-black/5 dark:bg-white/5 group hidden-item-row" data-id="<%= item._id %>">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-md bg-black/10 dark:bg-white/10 overflow-hidden flex-shrink-0">
+                                        <img src="<%= item.cover_image || '/ressources/logo.png' %>" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="overflow-hidden">
+                                        <div class="text-xs font-bold truncate"><%= item.title %></div>
+                                        <div class="text-[10px] opacity-50 truncate">
+                                            <%= item.director %>
+                                            <% if (item.format_type) { %> • <%= item.format_type %><% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="text-red-500 opacity-50 hover:opacity-100 p-2 rounded-lg" onclick="removeHiddenItem('<%= item._id %>')">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p id="noHiddenItemsMsg" class="text-xs opacity-50 italic"><%= t('admin.visibility.no_hidden_items') || 'No items hidden.' %></p>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-black/5 dark:border-white/5">
+                <button type="submit" class="w-full sm:w-auto bg-primary-theme text-white text-xs font-black uppercase tracking-widest px-10 py-4 rounded-2xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary-theme/20 flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-save"></i>
+                    <%= t('admin.visibility.save_btn') || 'Save Visibility' %>
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<script>
+    let hiddenItemsArr = JSON.parse(document.getElementById('hiddenItemsInput').value || '[]');
+    
+    const getFormatLabel = (item) => {
+        if (!item.format_type) return '';
+        return ' • ' + item.format_type;
+    };
+
+    document.getElementById('itemSearch').addEventListener('input', async function(e) {
+        const q = e.target.value.trim();
+        const resultsBox = document.getElementById('itemSearchResults');
+        
+        if (q.length < 2) {
+            resultsBox.classList.add('hidden');
+            return;
+        }
+
+        try {
+            const res = await fetch(`<%= baseUrl %>/admin/api/search-collection?q=${encodeURIComponent(q)}`);
+            const items = await res.json();
+            
+            resultsBox.innerHTML = '';
+            if (items.length === 0) {
+                resultsBox.innerHTML = `<div class="p-4 text-xs opacity-50 text-center"><%= t('common.no_results') || 'No results' %></div>`;
+            } else {
+                items.forEach(item => {
+                    const isAlreadyHidden = hiddenItemsArr.includes(item._id.toString());
+                    const div = document.createElement('div');
+                    div.className = `p-3 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer ${isAlreadyHidden ? 'opacity-50 pointer-events-none' : ''}`;
+                    div.innerHTML = `
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <img src="${item.cover_image || '/ressources/logo.png'}" class="w-8 h-8 rounded-md object-cover bg-black/10 dark:bg-white/10">
+                            <div class="overflow-hidden">
+                                <div class="text-xs font-bold truncate">${item.title}</div>
+                                <div class="text-[10px] opacity-60 truncate">${item.director || ''}${getFormatLabel(item)}</div>
+                            </div>
+                        </div>
+                        ${isAlreadyHidden ? '<i class="fa-solid fa-check text-green-500"></i>' : '<i class="fa-solid fa-plus text-primary-theme"></i>'}
+                    `;
+                    
+                    if (!isAlreadyHidden) {
+                        div.addEventListener('click', () => {
+                            addHiddenItem(item);
+                            document.getElementById('itemSearch').value = '';
+                            resultsBox.classList.add('hidden');
+                        });
+                    }
+                    
+                    resultsBox.appendChild(div);
+                });
+            }
+            resultsBox.classList.remove('hidden');
+        } catch (err) {
+            console.error(err);
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#itemSearch') && !e.target.closest('#itemSearchResults')) {
+            document.getElementById('itemSearchResults').classList.add('hidden');
+        }
+    });
+
+    function addHiddenItem(item) {
+        if (hiddenItemsArr.includes(item._id.toString())) return;
+        
+        hiddenItemsArr.push(item._id.toString());
+        document.getElementById('hiddenItemsInput').value = JSON.stringify(hiddenItemsArr);
+        
+        const container = document.getElementById('hiddenItemsContainer');
+        const noMsg = document.getElementById('noHiddenItemsMsg');
+        if (noMsg) noMsg.style.display = 'none';
+
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between p-3 rounded-xl bg-black/5 dark:bg-white/5 group hidden-item-row';
+        div.dataset.id = item._id;
+        div.innerHTML = `
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-md bg-black/10 dark:bg-white/10 overflow-hidden flex-shrink-0">
+                    <img src="${item.cover_image || '/ressources/logo.png'}" class="w-full h-full object-cover">
+                </div>
+                <div class="overflow-hidden">
+                    <div class="text-xs font-bold truncate">${item.title}</div>
+                    <div class="text-[10px] opacity-50 truncate">${item.director || ''}${getFormatLabel(item)}</div>
+                </div>
+            </div>
+            <button type="button" class="text-red-500 opacity-50 hover:opacity-100 p-2 rounded-lg" onclick="removeHiddenItem('${item._id}')">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        `;
+        container.prepend(div);
+    }
+
+    function removeHiddenItem(id) {
+        hiddenItemsArr = hiddenItemsArr.filter(i => i !== id);
+        document.getElementById('hiddenItemsInput').value = JSON.stringify(hiddenItemsArr);
+        
+        const row = document.querySelector(`.hidden-item-row[data-id="${id}"]`);
+        if (row) row.remove();
+        
+        if (hiddenItemsArr.length === 0) {
+            const noMsg = document.getElementById('noHiddenItemsMsg');
+            if (noMsg) noMsg.style.display = 'block';
+        }
+    }
+</script>

@@ -1,0 +1,185 @@
+<%- include('partials/header') %>
+
+<div class="max-w-screen-xl mx-auto space-y-8 md:space-y-12 pb-12 md:px-0">
+    
+    <section class="relative card-theme rounded-3xl p-6 md:p-12 shadow-2xl overflow-hidden">
+            
+        <div class="relative z-10 text-center space-y-4 md:space-y-6">
+            <h1 class="text-3xl md:text-6xl font-black tracking-tight">
+                <%= t('index.welcome') %> <span class="username-highlight"><%= user.username %></span> !
+            </h1>
+            <p class="opacity-70 text-base md:text-xl max-w-2xl mx-auto">
+                <%= t('index.hero_subtitle') %>
+            </p>
+
+            <form action="<%= baseUrl %>/collection" method="GET" class="w-full max-w-xl mx-auto mt-8">
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none z-10">
+                        <i class="fa-solid fa-search opacity-50 group-focus-within:text-primary-theme transition-colors"></i>
+                    </div>
+                    <input type="text" name="search" class="block w-full p-4 pl-12 text-base bg-black/5 dark:bg-black/20 border border-transparent focus:border-primary-theme rounded-full focus:ring-2 focus:ring-primary-theme/50 placeholder-opacity-50 transition-all shadow-inner" placeholder="<%= t('index.search_placeholder') %>">
+                    <button type="submit" class="absolute right-2 top-2 bottom-2 bg-gray-200 dark:bg-white/10 hover:bg-primary-theme hover:text-white font-medium rounded-full text-sm px-4 transition-colors z-10"><%= t('common.go') %></button>
+                </div>
+            </form>
+
+            <div class="flex flex-wrap justify-center gap-4 pt-4 text-sm opacity-80">
+                <% if (user.isAdmin) { %>
+                    <a href="<%= baseUrl %>/add-vhs" class="inline-flex items-center gap-2 hover:text-primary-theme transition-colors">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span class="hidden sm:inline"><%= t('index.nav_add_full') %></span>
+                    </a>
+                    <span class="opacity-30">|</span>
+                <% } %>
+                <a href="<%= baseUrl %>/collection" class="inline-flex items-center gap-2 hover:text-primary-theme transition-colors">
+                    <i class="fa-solid fa-list"></i> <%= t('index.nav_view_all') %>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="flex items-center justify-between mb-4 md:mb-6 px-2">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-6 md:h-8 bg-primary-theme rounded-full inline-block"></span>
+                <h2 class="text-xl md:text-2xl font-bold"><%= t('index.section_latest') %></h2>
+            </div>
+            <a href="<%= baseUrl %>/collection" class="text-sm font-bold text-primary-theme opacity-90 hover:opacity-100 transition-colors flex items-center gap-1 group whitespace-nowrap">
+                <%= t('index.view_everything') %> <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+            </a>
+        </div>
+
+        <% if (latestCollection.length > 0) { %>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                <% latestCollection.forEach(tape => { %>
+                    <a href="<%= baseUrl %>/vhs/<%= tape._id %>" class="group relative card-theme rounded-xl overflow-hidden hover:border-primary-theme transition-all hover:shadow-lg hover:-translate-y-1">
+
+                        <div class="aspect-[2/3] relative overflow-hidden bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                            <img src="<%= tape.cover_image %>"
+                                class="relative z-10 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+
+                            <span class="absolute top-2 right-2 z-20 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm opacity-90 bg-[var(--highlight)] text-[var(--highlight-text)]">
+                                <%= t('media.vhs') %>
+                            </span>
+                        </div>
+
+                        <div class="p-3 md:p-4">
+                            <h3 class="font-bold truncate text-sm md:text-base leading-tight"><%= tape.title %></h3>
+                            <p class="text-xs opacity-60 truncate">
+                                <%= tape.director %>
+                            </p>
+                        </div>
+                    </a>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="text-center py-10 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl opacity-60"><%= t('index.empty_collection') %></div>
+        <% } %>
+    </section>
+
+    <section>
+        <div class="flex items-center justify-between mb-4 md:mb-6 px-2">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-6 md:h-8 bg-primary-theme rounded-full inline-block"></span>
+                <h2 class="text-xl md:text-2xl font-bold"><%= t('index.section_wishlist') %></h2>
+            </div>
+            <a href="<%= baseUrl %>/wishlist" class="text-sm font-bold text-primary-theme opacity-90 hover:opacity-100 transition-colors flex items-center gap-1 group whitespace-nowrap">
+                <%= t('index.view_everything') %> <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+            </a>
+        </div>
+        <% if (latestWishlist.length > 0) { %>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 items-end">
+                <% latestWishlist.forEach(tape => { %>
+                    <a href="<%= baseUrl %>/vhs/<%= tape._id %>" class="group relative card-theme rounded-xl overflow-hidden hover:border-primary-theme transition-all hover:shadow-lg hover:-translate-y-1">
+
+                        <div class="aspect-[2/3] relative overflow-hidden bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                            <img src="<%= tape.cover_image %>"
+                                class="relative z-10 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+
+                            <span class="absolute top-2 right-2 z-20 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm opacity-90 bg-[var(--highlight)] text-[var(--highlight-text)]">
+                                <%= t('media.vhs') %>
+                            </span>
+                        </div>
+
+                        <div class="p-3 md:p-4">
+                            <h3 class="font-bold truncate text-sm md:text-base leading-tight"><%= tape.title %></h3>
+                            <p class="text-xs opacity-60 truncate mb-1">
+                                <%= tape.director || 'Inconnu' %>
+                            </p>
+
+                            <div class="flex items-center gap-1 h-4">
+                                <% if(tape.is_original === false) { %>
+                                    <span class="w-2 h-2 rounded-full bg-primary-theme inline-block flex-shrink-0"></span>
+                                    <span class="text-[9px] md:text-[10px] opacity-60 truncate"><%= t('media.recording') %></span>
+                                <% } %>
+                            </div>
+                        </div>
+                    </a>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="text-center py-10 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl opacity-60"><%= t('index.empty_wishlist') %></div>
+        <% } %>
+    </section>
+
+    <section>
+        <div class="flex items-center gap-2 mb-6 px-2">
+            <span class="w-2 h-6 md:h-8 bg-primary-theme rounded-full inline-block"></span>
+            <h2 class="text-xl md:text-2xl font-bold"><%= t('index.section_stats') %></h2>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-6 gap-4 md:gap-6">
+            <%
+            const widgetConfig = {
+                'total': { label: t('stats.total_label'), val: stats.total, unit: t('media.vhs_plural'), icon: 'fa-database', color: 'bg-primary-theme' },
+                'films': { label: t('stats.films_label'), val: stats.films, icon: 'fa-film', color: 'bg-primary-theme' },
+                'originals': { label: t('stats.originals_ratio_unit'), val: `${stats.originals} / ${stats.recordings}`, icon: 'fa-video', color: 'bg-primary-theme' },
+                'totalValue': { label: t('stats.value_label'), val: stats.totalValue > 0 ? new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', { style: 'currency', currency: stats.valueCurrency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(stats.totalValue) : '—', unit: stats.valuedCount > 0 && stats.valuedCount < stats.total ? `(${stats.valuedCount}/${stats.total})` : null, icon: 'fa-sack-dollar', color: 'bg-primary-theme' },
+            };
+
+            const topConfigs = {
+                'director': { label: t('stats.top_director_label'), data: stats.director, icon: 'fa-clapperboard', color: 'bg-primary-theme' },
+                'genre': { label: t('stats.top_genre_label'), data: stats.genre, icon: 'fa-film', color: 'bg-primary-theme' },
+                'actor': { label: t('stats.top_actor_label'), data: stats.actor, icon: 'fa-user', color: 'bg-primary-theme' },
+            };
+
+            // Fixed display order, independent of the order widgets happen to be
+            // stored in settings.statsWidgets (which just reflects checkbox
+            // submission order from the personalisation page).
+            const WIDGET_ORDER = ['total', 'films', 'originals', 'genre', 'actor', 'director', 'totalValue'];
+            const selectedWidgets = (settings && settings.statsWidgets) ? settings.statsWidgets : ['total', 'films', 'originals', 'director'];
+            const activeWidgets = WIDGET_ORDER.filter(id => selectedWidgets.includes(id));
+
+            activeWidgets.forEach(id => { 
+                const w = widgetConfig[id];
+                const tW = topConfigs[id];
+
+                if (w) { %>
+                    <div class="card-theme p-6 rounded-2xl flex items-center gap-4 transition-all hover:scale-[1.02] md:col-span-2">
+                        <div class="w-12 h-12 rounded-full <%= w.color %> flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="fa-solid <%= w.icon %> fa-fw"></i>
+                        </div>
+                        <div>
+                            <p class="opacity-60 font-medium text-xs uppercase tracking-wider mb-1"><%= w.label %></p>
+                            <h3 class="text-3xl font-bold">
+                                <%= w.val %> <% if(w.unit){ %><span class="text-base font-normal opacity-50"><%= w.unit %></span><% } %>
+                            </h3>
+                        </div>
+                    </div>
+                <% } else if (tW) { %>
+                    <div class="card-theme p-6 rounded-2xl flex items-center gap-4 transition-all hover:scale-[1.02] min-w-0 md:col-span-2">
+                        <div class="w-12 h-12 rounded-full <%= tW.color %> flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="fa-solid <%= tW.icon %> fa-fw"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="opacity-60 font-medium text-xs uppercase tracking-wider truncate"><%= tW.label %></p>
+                            <h3 class="text-lg font-bold truncate"><%= tW.data.name %></h3>
+                            <p class="text-xs opacity-60 truncate"><%= t('stats.owned_times', { count: tW.data.count }) %></p>
+                        </div>
+                    </div>
+                <% }
+            }); %>
+        </div>
+    </section>
+</div>
+
+<%- include('partials/footer') %>

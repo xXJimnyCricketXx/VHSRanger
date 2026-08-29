@@ -1,0 +1,150 @@
+<%- include('partials/header') %>
+
+    <div class="max-w-screen-xl mx-auto px-1 md:px-0 pb-12">
+
+        <div class="pt-6 mb-6 flex items-center justify-between">
+            <h1 class="text-3xl font-bold transition-colors flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                <span class="flex items-center gap-3">
+                    <span class="w-2 h-7 md:h-8 bg-primary-theme rounded-full inline-block flex-shrink-0"></span>
+                    <span>
+                        <%= t('collection.title') %>
+                    </span>
+                </span>
+                <span
+                    class="px-3 md:mt-1.5 py-1 bg-primary-theme rounded-full text-sm font-bold w-fit">
+                    <%= totalItems %>
+                        <%= t('common.items') %>
+                </span>
+            </h1>
+            <% if (user.isAdmin) { %>
+                    <div class="flex gap-2">
+
+                        <a href="<%= baseUrl %>/add-vhs"
+                            class="flex-shrink-0 w-10 h-10 md:w-auto md:px-4 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 group"
+                            title="<%= t('collection.add') %>">
+                            <i class="fa-solid fa-plus group-hover:scale-110 transition-transform"></i>
+                            <span class="hidden md:inline text-xs font-bold uppercase tracking-widest">
+                                <%= t('collection.add') %>
+                            </span>
+                        </a>
+
+                        <a href="<%= baseUrl %>/print/collection" target="_blank"
+                            class="flex-shrink-0 w-10 h-10 md:w-auto md:px-4 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 group"
+                            title="Drucken / Als PDF speichern">
+                            <i class="fa-solid fa-print group-hover:scale-110 transition-transform"></i>
+                            <span class="hidden md:inline text-xs font-bold uppercase tracking-widest">Drucken</span>
+                        </a>
+                    </div>
+                <% } %>
+
+        </div>
+
+        <%- include('partials/collection-filters') %>
+
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6" id="albumGrid">
+            <% tapes.forEach(tape=> { %>
+                <% const detailUrl=`/vhs/${tape._id}`; %>
+
+                    <div class="album-card group relative card-theme rounded-xl overflow-hidden hover:border-primary-theme transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                        data-location="<%= tape.location || '' %>"
+                        data-format="<%= tape.media_type || tape.format_type || '' %>">
+                        <a href="<%= baseUrl + detailUrl %>" class="block">
+                            <div
+                                class="aspect-[2/3] w-full relative overflow-hidden bg-black/5 flex items-center justify-center">
+
+                                <img src="<%= tape.cover_image %>"
+                                    class="relative z-10 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    loading="lazy">
+
+                                <span
+                                    class="absolute bottom-2 left-2 z-20 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md border border-white/10 shadow-sm opacity-90 bg-[var(--highlight)] text-[var(--highlight-text)]">
+                                    <%= t('media.vhs') %>
+                                </span>
+                            </div>
+
+                            <div class="p-3">
+                                <h3 class="font-bold text-sm truncate" title="<%= tape.title %>">
+                                    <%= tape.title %>
+                                </h3>
+                                <p class="text-xs opacity-60 truncate mb-2">
+                                    <%= tape.director || 'Inconnu' %>
+                                </p>
+
+                                <% if(tape.year || tape.is_original === false) { %>
+                                    <div class="flex items-center gap-1.5 mt-1 min-w-0 overflow-hidden">
+                                        <% if(tape.year) { %>
+                                            <span class="text-[9px] md:text-[10px] opacity-60 bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded border border-transparent truncate font-medium transition-colors">
+                                                <%= tape.year %>
+                                            </span>
+                                        <% } %>
+                                        <% if(tape.is_original === false) { %>
+                                            <div class="flex items-center gap-1 min-w-0 truncate" title="<%= t('media.recording') %>">
+                                                <span
+                                                    class="w-1.5 h-1.5 rounded-full bg-primary-theme inline-block flex-shrink-0"></span>
+                                                <span class="text-[9px] md:text-[10px] opacity-60 truncate">
+                                                    <%= t('media.recording') %>
+                                                </span>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </a>
+                    </div>
+                    <% }) %>
+        </div>
+
+        <div
+            class="mt-12 flex flex-col md:flex-row items-center justify-between gap-6 border-t border-black/5 dark:border-white/10 pt-8">
+
+            <div class="flex items-center gap-3 order-2 md:order-1">
+                <span class="text-xs font-bold uppercase tracking-widest opacity-40">
+                    <%= t('common.show') %>
+                </span>
+                <div class="flex bg-black/5 dark:bg-white/5 p-1 rounded-xl">
+                    <% [25, 50, 100].forEach(num=> { %>
+                        <button onclick="currentLimit = <%= num %>; reloadPage();"
+                            class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all <%= (locals.queryLimit == num) ? 'bg-primary-theme text-white shadow-md' : 'opacity-50 hover:opacity-100' %>">
+                            <%= num %>
+                        </button>
+                        <% }) %>
+                </div>
+            </div>
+
+            <% if (totalPages> 1) { %>
+                <nav class="flex items-center gap-2 order-1 md:order-2">
+                    <button onclick="changePage(<%= currentPage - 1 %>)" <%=currentPage <=1 ? 'disabled' : '' %>
+                        class="w-10 h-10 flex items-center justify-center rounded-xl card-theme border-none
+                        hover:bg-primary-theme hover:text-white transition-all disabled:opacity-20
+                        disabled:pointer-events-none">
+                        <i class="fa-solid fa-chevron-left text-xs"></i>
+                    </button>
+
+                    <div class="flex items-center gap-1">
+                        <% for(let i=1; i <=totalPages; i++) { if (i===1 || i===totalPages || (i>= currentPage - 1 && i
+                            <= currentPage + 1)) { %>
+                                <button onclick="changePage(<%= i %>)"
+                                    class="w-10 h-10 flex items-center justify-center rounded-xl font-bold text-sm transition-all <%= currentPage === i ? 'bg-primary-theme text-white shadow-lg scale-110' : 'card-theme hover:bg-black/5 dark:hover:bg-white/5' %>">
+                                    <%= i %>
+                                </button>
+                                <% } else if (i===currentPage - 2 || i===currentPage + 2) { %>
+                                    <span class="px-1 opacity-30">...</span>
+                                    <% } } %>
+                    </div>
+
+                    <button onclick="changePage(<%= currentPage + 1 %>)" <%=currentPage>= totalPages ? 'disabled' : ''
+                        %>
+                        class="w-10 h-10 flex items-center justify-center rounded-xl card-theme border-none
+                        hover:bg-primary-theme hover:text-white transition-all disabled:opacity-20
+                        disabled:pointer-events-none">
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                    </button>
+                </nav>
+                <% } %>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

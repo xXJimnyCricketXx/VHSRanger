@@ -1,0 +1,192 @@
+<%
+  const THEMES = (typeof locals.allThemes !== 'undefined') ? locals.allThemes : {};
+  let activePresetKey = 'ranger';
+  if (typeof settings !== 'undefined' && settings && settings.theme && settings.theme.preset) {
+      activePresetKey = settings.theme.preset;
+  }
+  const safeFallback = { bg: '#171717', card: '#262626', navbar: '#0a0a0a', text: '#ffffff', highlight: '#ff89a9', highlightText: '#232323' };
+  const activeDarkTheme = (THEMES[activePresetKey] && THEMES[activePresetKey].dark) || (THEMES['ranger'] && THEMES['ranger'].dark) || safeFallback;
+  const bgColor = activeDarkTheme.bg || safeFallback.bg;
+  const cardColor = activeDarkTheme.card || safeFallback.card;
+  const footerColor = activeDarkTheme.footer || activeDarkTheme.navbar || safeFallback.navbar;
+  const textColor = activeDarkTheme.text || safeFallback.text;
+  const highlightColor = activeDarkTheme.highlight || safeFallback.highlight;
+  const highlightTextColor = activeDarkTheme.highlightText || '#fff';
+  const borderColor = 'rgba(255,255,255,0.1)'; // matches --border-color used by the shared header/footer in dark mode
+%>
+<!DOCTYPE html>
+<html lang="<%= currentLng %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title><%= t('login.title') %></title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&family=Varela+Round&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="<%= baseUrl %>/ressources/logo.png">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="<%= baseUrl %>/styles/style.css">
+
+  <style>
+    body { background: <%= bgColor %>; color: <%= textColor %>; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
+    .form-bg { background: <%= cardColor %>; border: 1px solid <%= borderColor %>; }
+    input, input::placeholder { background: rgba(255,255,255,0.05) !important; color: <%= textColor %> !important; }
+    input { border: 1px solid <%= borderColor %> !important; }
+    input:focus { outline: none; box-shadow: 0 0 0 2px <%= highlightColor %>; border-color: <%= highlightColor %> !important; }
+    .password-toggle { color: #aaa; }
+    .password-toggle:hover { color: <%= textColor %>; }
+    .error { color: #f87171; }
+
+    .btn-login {
+        background: <%= highlightColor %>;
+        color: <%= highlightTextColor %>;
+    }
+    .btn-login:hover { filter: brightness(1.1); }
+
+    .login-footer { background: <%= footerColor %>; border-top: 1px solid <%= borderColor %>; }
+
+    .version-pill {
+        display: inline-block;
+        background: <%= cardColor %>;
+        border: 1px solid <%= borderColor %>;
+        color: <%= highlightColor %>;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        border-radius: 999px;
+        padding: 2px 14px;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+  <div class="flex-grow flex items-center justify-center p-4">
+    <section class="w-full max-w-md">
+      <div class="text-center mb-8">
+        <img src="<%= baseUrl %>/ressources/logo/vhsranger-logo-stacked-dark.png" alt="VHSRanger!" class="mx-auto h-60 w-auto">
+      </div>
+      
+      <div class="form-bg rounded-2xl shadow-xl p-8 transition-all">
+        <h1 class="text-3xl font-bold text-white mb-8 text-center">
+          <%= t('login.title') %>
+        </h1>
+        
+        <form action="<%= baseUrl %>/login" class="space-y-6">
+          <div class="grid gap-4">
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-300 mb-2">
+                <%= t('login.email_label') %>
+              </label>
+              <input 
+                type="text" 
+                name="email" 
+                required
+                class="w-full px-4 py-3 rounded-lg border border-gray-700 transition-all"
+                placeholder="<%= t('login.email_placeholder') %>">
+              <div class="email error mt-2 text-sm"></div>
+            </div>
+    
+            <div class="relative">
+              <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
+                <%= t('login.password_label') %>
+              </label>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  name="password" 
+                  id="password"
+                  required
+                  class="w-full px-4 py-3 rounded-lg border border-gray-700 transition-all pr-12" 
+                  placeholder="<%= t('login.password_placeholder') %>">
+                <button 
+                  type="button" 
+                  id="togglePassword" 
+                  class="absolute right-3 top-1/2 -translate-y-1/2 transform flex items-center justify-center h-8 w-8 password-toggle">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+              <div class="password error mt-2 text-sm"></div>
+            </div>
+          </div>
+    
+          <button
+            type="submit"
+            class="btn-login w-full font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02]">
+            <%= t('login.submit_btn') %>
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <footer class="mt-auto login-footer transition-colors duration-300">
+      <div class="max-w-screen-xl mx-auto py-5 px-4">
+          <div class="flex flex-col items-center justify-center space-y-1">
+              <img src="<%= baseUrl %>/ressources/logo/vhsranger-logo-dark.png" alt="VHSRanger!" class="h-10 w-auto">
+              <span class="version-pill">v<%= appVersion %></span>
+          </div>
+      </div>
+  </footer>
+
+  <script>
+
+    const form = document.querySelector('form');
+    const emailInput = form.email;
+    const passwordInput = form.password;
+    const emailError = document.querySelector('.email.error');
+
+    const togglePassword = document.querySelector('#togglePassword');
+    const eyeIcon = togglePassword.querySelector('i');
+
+    togglePassword.addEventListener('click', function () {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      eyeIcon.classList.toggle('fa-eye');
+      eyeIcon.classList.toggle('fa-eye-slash');
+    });
+
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+    
+      emailError.textContent = '';
+      [emailInput, passwordInput].forEach(input => {
+        input.classList.remove('border-red-500', 'focus:ring-red-500');
+        input.classList.add('border-gray-200', 'dark:border-gray-600');
+      });
+
+      const email = emailInput.value;
+      const password = passwordInput.value;
+
+      try {
+        const res = await fetch('<%= baseUrl %>/login', { 
+          method: 'POST', 
+          body: JSON.stringify({ email, password }),
+          headers: {'Content-Type': 'application/json'}
+        });
+        const data = await res.json();
+        
+        if (data.errors) {
+          emailError.textContent = data.errors.login;
+          
+          [emailInput, passwordInput].forEach(input => {
+            input.classList.remove('border-gray-200', 'dark:border-gray-600');
+            input.classList.add('border-red-500', 'focus:ring-red-500');
+          });
+        }
+        
+        if (data.user) {
+          location.assign('<%= baseUrl || '/' %>');
+        }
+      }
+      catch (err) {
+        console.log(err);
+      }
+    });
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<Container version="2">
+  <Name>VHSRanger</Name>
+  <Repository>ghcr.io/xxjimnycricketxx/vhsranger:latest</Repository>
+  <Registry>https://github.com/xXJimnyCricketXx/VHSRanger/pkgs/container/vhsranger</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/xXJimnyCricketXx/VHSRanger/issues</Support>
+  <Project>https://github.com/xXJimnyCricketXx/VHSRanger</Project>
+  <Overview>A self-hosted VHS tape collection manager.</Overview>
+  <Description>VHSRanger is a self-hosted collection manager for your VHS tapes: track your collection, wishlist, and originals vs. home recordings, with TMDb metadata integration. Note: Requires a separate MongoDB instance.</Description>
+  <Category>MediaApp:Video MediaApp:Other</Category>
+  <WebUI>http://[IP]:[PORT:18003]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/xXJimnyCricketXx/VHSRanger/main/unraid-template/vhsranger.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/xXJimnyCricketXx/VHSRanger/main/public/ressources/icone-512.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled></DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires>MongoDB database. You must install a MongoDB container first and link it via the MONGODB_URL variable.</Requires>
+
+  <Config Name="WebUI Port" Target="3098" Default="18003" Mode="tcp" Description="The port VHSRanger will be accessible on." Type="Port" Display="always" Required="true" Mask="false">18003</Config>
+
+  <Config Name="Uploads Volume" Target="/app/public/uploads" Default="/mnt/user/appdata/vhsranger/uploads" Mode="rw" Description="Directory to store uploaded files like covers." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/vhsranger/uploads</Config>
+
+  <Config Name="Backups Volume" Target="/app/backups" Default="/mnt/user/appdata/vhsranger/backups" Mode="rw" Description="Directory where automated database backups are stored." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/vhsranger/backups</Config>
+
+  <Config Name="MongoDB URL" Target="MONGODB_URL" Default="mongodb://[IP_OF_MONGODB]:27017/vhsranger" Mode="" Description="Connection string for your MongoDB instance. Replace [IP_OF_MONGODB] with your MongoDB container IP or Unraid IP if hosted on the same custom network." Type="Variable" Display="always" Required="true" Mask="false">mongodb://[IP_OF_MONGODB]:27017/vhsranger</Config>
+  <Config Name="JWT Password" Target="PASSJWT" Default="ChangeThisToAComplexPassword" Mode="" Description="Password used for JWT token encryption." Type="Variable" Display="always" Required="true" Mask="true">ChangeThisToAComplexPassword</Config>
+  <Config Name="Session Secret" Target="SESSION_SECRET" Default="ChangeThisToAComplexSecret" Mode="" Description="Secret used for sessions." Type="Variable" Display="always" Required="true" Mask="true">ChangeThisToAComplexSecret</Config>
+
+  <Config Name="HTTPS Production Mode" Target="PROD" Default="false" Mode="" Description="Change to true ONLY if you use HTTPS via a reverse proxy." Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="VHS Port Variable" Target="VHS_PORT" Default="3098" Mode="" Description="Internal port variable required by the app." Type="Variable" Display="always" Required="true" Mask="false">3098</Config>
+  <Config Name="Base URL" Target="BASE_URL" Default="" Mode="" Description="Base URL for serving on a sub-path, leave empty to serve from root." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="TMDb API Key" Target="TMDB_API_KEY" Default="" Mode="" Description="Your TMDb API Key for metadata lookups." Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+</Container>

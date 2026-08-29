@@ -1,0 +1,287 @@
+<%
+  const THEMES = (typeof locals.allThemes !== 'undefined') ? locals.allThemes : {};
+  let activePresetKey = 'ranger';
+  if (typeof settings !== 'undefined' && settings && settings.theme && settings.theme.preset) {
+      activePresetKey = settings.theme.preset;
+  }
+  const safeFallback = {
+      light: { bg: '#e4e2dd', card: '#ffffff', text: '#232323', highlight: '#ff89a9', highlightText: '#232323' },
+      dark:  { bg: '#171012', card: '#282929', text: '#f1efe9', highlight: '#ff89a9', highlightText: '#232323' }
+  };
+  const activeTheme = THEMES[activePresetKey] || THEMES['ranger'] || safeFallback;
+  const modeTheme = isDark ? (activeTheme.dark || safeFallback.dark) : (activeTheme.light || safeFallback.light);
+  const bgColor = modeTheme.bg;
+  const cardColor = modeTheme.card;
+  const textColor = modeTheme.text;
+  const highlightColor = modeTheme.highlight || safeFallback.light.highlight;
+  const highlightTextColor = modeTheme.highlightText || '#fff';
+  const borderColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)';
+  const imgPlaceholder = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)';
+%>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VHSRanger! – <%= t('nav.stats') %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <style>
+        body { background: <%= bgColor %>; color: <%= textColor %>; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        .card { background: <%= cardColor %>; box-shadow: 0 1px 4px rgba(0,0,0,<%= isDark ? '.3' : '.06' %>); }
+        .value-row { border-bottom: 1px solid <%= borderColor %>; }
+        .value-row img { background: <%= imgPlaceholder %>; }
+
+        .card {
+            border-radius: 1.25rem;
+            padding: 1.75rem;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: .4;
+            margin-bottom: 1.25rem;
+        }
+
+        .stat-number { font-size: 2.75rem; font-weight: 900; line-height: 1; }
+        .stat-label  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: .5; margin-top: .3rem; }
+
+        .chart-wrap { position: relative; height: 280px; }
+
+        .value-row {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .55rem 0;
+        }
+        .value-row:last-child { border-bottom: none; }
+        .value-row img {
+            width: 42px; height: 42px;
+            border-radius: .5rem;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .no-print {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+        }
+        .btn-print {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: <%= highlightColor %>;
+            color: <%= highlightTextColor %>;
+        }
+
+        @media print {
+            @page { size: A4; margin: 15mm; }
+            .no-print { display: none !important; }
+            body { background: #fff !important; color: #232323 !important; }
+            .card { background: #fff !important; box-shadow: none !important; border: 1px solid #e5e5e5; break-inside: avoid; }
+            .value-row { border-bottom: 1px solid rgba(0,0,0,.08) !important; }
+            .value-row img { background: #f0f0f0 !important; }
+        }
+    </style>
+</head>
+<body>
+<div style="max-width:1140px; margin:0 auto; padding:2.5rem 1.5rem;">
+
+    <div class="no-print">
+        <button onclick="window.print()" class="btn-print">
+            🖨️ Drucken / Als PDF speichern
+        </button>
+    </div>
+
+    <!-- Header / Kennzahlen -->
+    <div class="text-center" style="margin-bottom:2.5rem;">
+        <img src="<%= baseUrl %>/ressources/<%= isDark ? 'logo/vhsranger-logo-dark.png' : 'logo/vhsranger-logo-light.png' %>" alt="VHSRanger!" style="height:3rem; width:auto; margin:0 auto 2rem;">
+
+        <div style="display:flex; justify-content:center; gap:4rem; flex-wrap:wrap;">
+            <div class="text-center">
+                <div class="stat-number"><%= totalTapes %></div>
+                <div class="stat-label"><%= t('stats.tapes_label') || 'Tapes' %></div>
+            </div>
+            <div class="text-center">
+                <div class="stat-number"><%= totalFilms %></div>
+                <div class="stat-label"><%= t('stats.films_label') || 'Films' %></div>
+            </div>
+            <div class="text-center">
+                <div class="stat-number" style="color:<%= highlightColor %>">
+                    <%= totalValue > 0
+                        ? new Intl.NumberFormat('de-DE', { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalValue)
+                        : 'N/A' %>
+                </div>
+                <div class="stat-label"><%= t('stats.total_value') || 'Total Value' %></div>
+            </div>
+            <div class="text-center">
+                <div class="stat-number"><%= originalGroup.original %></div>
+                <div class="stat-label"><%= t('stats.originals_label') || 'Originals' %></div>
+            </div>
+            <div class="text-center">
+                <div class="stat-number"><%= originalGroup.recording %></div>
+                <div class="stat-label"><%= t('stats.recordings_label') || 'Home Recordings' %></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Genre -->
+    <div class="card" style="margin-bottom:1.25rem;">
+        <div class="section-title"><%= t('stats.genres') || 'Genres' %></div>
+        <div class="chart-wrap"><canvas id="genreChart"></canvas></div>
+    </div>
+
+    <!-- Two columns -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
+
+        <div class="card">
+            <div class="section-title"><%= t('stats.top_valuable') || 'Top 10 Wertvollste' %></div>
+            <% if (mostValuable.length === 0) { %>
+                <p style="font-size:.8rem; opacity:.4; font-style:italic;"><%= t('stats.no_estimates') || 'Noch keine Schätzungen vorhanden.' %></p>
+            <% } else { %>
+                <% mostValuable.forEach(tape => { %>
+                    <div class="value-row">
+                        <img src="<%= tape.cover_image %>" alt="">
+                        <div style="min-width:0; flex-grow:1;">
+                            <p style="font-weight:700; font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= tape.title %></p>
+                            <p style="font-size:.75rem; opacity:.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= tape.director %></p>
+                        </div>
+                        <span style="font-size:.85rem; font-weight:900; flex-shrink:0; color:<%= highlightColor %>;">
+                            <%= new Intl.NumberFormat('de-DE', { style: 'currency', currency, maximumFractionDigits: 2 }).format(tape.estimated_price.value * (tape.quantity || 1)) %>
+                        </span>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+
+        <div class="card">
+            <div class="section-title"><%= t('stats.recent') || 'Zuletzt hinzugefügt' %></div>
+            <% recentAdditions.forEach(tape => { %>
+                <div class="value-row">
+                    <img src="<%= tape.cover_image %>" alt="">
+                    <div style="min-width:0; flex-grow:1;">
+                        <p style="font-weight:700; font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= tape.title %></p>
+                        <p style="font-size:.75rem; opacity:.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= tape.director %></p>
+                    </div>
+                    <span style="font-size:.75rem; opacity:.4; flex-shrink:0;">
+                        <%= tape.added_at ? new Date(tape.added_at).toLocaleDateString('de-DE') : '' %>
+                    </span>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+
+    <!-- Release Year -->
+    <div class="card" style="margin-bottom:1.25rem;">
+        <div class="section-title"><%= t('stats.by_year') || 'Bänder nach Erscheinungsjahr' %></div>
+        <div class="chart-wrap"><canvas id="yearChart"></canvas></div>
+    </div>
+
+    <!-- Condition Pie -->
+    <div class="card" style="margin-bottom:2.5rem;">
+        <div class="section-title"><%= t('stats.condition') || 'Zustand' %></div>
+        <div class="chart-wrap"><canvas id="conditionChart"></canvas></div>
+    </div>
+
+    <div style="text-align:center; font-size:.7rem; opacity:.3; padding-bottom:1rem;">
+        VHSRanger! · Stand: <%= printDate %>
+    </div>
+
+</div>
+
+<script>
+    Chart.defaults.font.family = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+    Chart.defaults.font.size = 11;
+
+    const isDark = <%- isDark ? 'true' : 'false' %>;
+    const pink = <%- JSON.stringify(highlightColor) %>;
+    const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
+    const tickColor = isDark ? '#999' : '#888';
+    const legendColor = <%- JSON.stringify(textColor) %>;
+    const pieBorderColor = <%- JSON.stringify(cardColor) %>;
+    const commonScales = {
+        y: { beginAtZero: true, ticks: { precision: 0, color: tickColor }, grid: { color: gridColor }, border: { display: false } },
+        x: { grid: { display: false }, ticks: { color: tickColor } }
+    };
+
+    const genreLabels = <%- JSON.stringify(genres.map(g => g[0])) %>;
+    const genreValues = <%- JSON.stringify(genres.map(g => g[1])) %>;
+    const yearLabels  = <%- JSON.stringify(years.map(y => y[0])) %>;
+    const yearValues  = <%- JSON.stringify(years.map(y => y[1])) %>;
+    const condLabels  = <%- JSON.stringify(conditions.map(c => t('vhs.condition.' + c[0]) || c[0])) %>;
+    const condValues  = <%- JSON.stringify(conditions.map(c => c[1])) %>;
+
+    // Genre bar chart
+    new Chart(document.getElementById('genreChart'), {
+        type: 'bar',
+        data: {
+            labels: genreLabels,
+            datasets: [{ data: genreValues, backgroundColor: pink, borderRadius: 5, borderSkipped: false }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: commonScales
+        }
+    });
+
+    // Release year line chart
+    new Chart(document.getElementById('yearChart'), {
+        type: 'line',
+        data: {
+            labels: yearLabels,
+            datasets: [{
+                data: yearValues,
+                borderColor: pink,
+                backgroundColor: 'rgba(255,137,169,.12)',
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: pink,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { ...commonScales, x: { ...commonScales.x, ticks: { ...commonScales.x.ticks, maxTicksLimit: 20 } } }
+        }
+    });
+
+    // Condition pie chart
+    const condColors = [pink,'#ffd3df','#232323','#5c5d5d','#c9b9bd','#a0a0a0','#d0d0d0'];
+    new Chart(document.getElementById('conditionChart'), {
+        type: 'pie',
+        data: {
+            labels: condLabels,
+            datasets: [{
+                data: condValues,
+                backgroundColor: condColors.slice(0, condLabels.length),
+                borderWidth: 2,
+                borderColor: pieBorderColor
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { font: { size: 12 }, padding: 16, color: legendColor }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

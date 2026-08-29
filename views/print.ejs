@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VHSRanger! – <%= title %></title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 11px;
+            color: #1a1a1a;
+            background: #fff;
+        }
+
+        .print-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 0 12px 0;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #232323;
+        }
+
+        .print-header h1 {
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .print-header h1 span {
+            color: #ff89a9;
+        }
+
+        .print-header .meta {
+            text-align: right;
+            font-size: 10px;
+            color: #232323;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead tr {
+            background: #232323;
+            color: #fff;
+        }
+
+        thead th {
+            padding: 7px 8px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            color: #fff !important;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        tbody td {
+            padding: 6px 8px;
+            vertical-align: middle;
+        }
+
+        .col-nr    { width: 32px; text-align: center; color: #999; font-size: 10px; }
+        .col-title { font-weight: 700; }
+        .col-artist { }
+        .col-year  { width: 44px; text-align: center; white-space: nowrap; }
+        .col-label { color: #555; }
+        .col-genre { color: #555; font-size: 10px; }
+        .col-value { width: 70px; text-align: right; font-weight: 700; white-space: nowrap; }
+        .col-cond  { width: 50px; text-align: center; }
+        .col-loc   { color: #777; font-size: 10px; }
+        .col-orig  { width: 56px; text-align: center; font-size: 9px; color: #555; }
+
+        .no-value { color: #ccc; }
+
+        .print-footer {
+            margin-top: 16px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #aaa;
+        }
+
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 12mm 14mm 18mm 14mm;
+
+                @bottom-left {
+                    content: "VHSRanger!";
+                    font-size: 8px;
+                    color: #232323;
+                }
+
+                @bottom-right {
+                    content: "Seite " counter(page) " von " counter(pages);
+                    font-size: 8px;
+                    color: #232323;
+                }
+            }
+
+            body { font-size: 10px; }
+
+            .no-print { display: none !important; }
+
+            .print-footer { display: none; }
+
+            tbody tr { page-break-inside: avoid; }
+
+            thead { display: table-header-group; }
+        }
+
+        /* Screen-only styles */
+        @media screen {
+            body { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+            .no-print {
+                position: fixed;
+                top: 16px;
+                right: 16px;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                border-radius: 10px;
+                font-weight: 700;
+                font-size: 13px;
+                cursor: pointer;
+                border: none;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .btn-print {
+                background: #ff89a9;
+                color: #232323;
+            }
+
+            .btn-back {
+                background: #f0f0f0;
+                color: #232323;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <button onclick="window.close()" class="btn btn-back">
+            ✕ Tab schließen
+        </button>
+        <button onclick="window.print()" class="btn btn-print">
+            🖨️ Drucken / Als PDF speichern
+        </button>
+    </div>
+
+    <div class="print-header">
+        <h1>VHS<span>Ranger!</span> – <%= title %></h1>
+        <div class="meta">
+            <div><%= tapes.length %> Einträge</div>
+            <div>Stand: <%= printDate %></div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="col-nr">#</th>
+                <th class="col-artist">Regisseur</th>
+                <th class="col-title">Titel</th>
+                <th class="col-year">Jahr</th>
+                <th class="col-label">Verleih</th>
+                <th class="col-genre">Genre</th>
+                <th class="col-value">Wert</th>
+                <th class="col-cond">Zustand</th>
+                <th class="col-orig">Typ</th>
+                <th class="col-loc">Standort</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% tapes.forEach((tape, i) => {
+                const price = tape.estimated_price && tape.estimated_price.value
+                    ? new Intl.NumberFormat('de-DE', {
+                        style: 'currency',
+                        currency: tape.estimated_price.currency || 'EUR',
+                        maximumFractionDigits: 2
+                      }).format(tape.estimated_price.value * (tape.quantity || 1))
+                    : null;
+            %>
+            <tr>
+                <td class="col-nr"><%= i + 1 %></td>
+                <td class="col-artist"><%= tape.director %></td>
+                <td class="col-title"><%= tape.title %></td>
+                <td class="col-year"><%= tape.year || '–' %></td>
+                <td class="col-label"><%= tape.distributor || '–' %></td>
+                <td class="col-genre"><%= tape.genre || (tape.genres && tape.genres[0]) || '–' %></td>
+                <td class="col-value">
+                    <% if (price) { %><%= price %><% } else { %><span class="no-value">–</span><% } %>
+                </td>
+                <td class="col-cond"><%= tape.condition ? (t('vhs.condition.' + tape.condition) || tape.condition) : '–' %></td>
+                <td class="col-orig"><%= tape.is_original === false ? t('vhs.recording_badge') : t('vhs.original_badge') %></td>
+                <td class="col-loc"><%= tape.location || '' %></td>
+            </tr>
+            <% }) %>
+        </tbody>
+    </table>
+
+    <div class="print-footer">
+        <span>VHSRanger! – v<%= typeof appVersion !== 'undefined' ? appVersion : '' %></span>
+        <span>Seite <span class="page-nr"></span></span>
+    </div>
+
+    <script>
+        // Auto-print when opened directly
+        if (window.location.search.includes('autoprint')) {
+            window.addEventListener('load', () => window.print());
+        }
+    </script>
+</body>
+</html>

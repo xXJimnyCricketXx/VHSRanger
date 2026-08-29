@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  vhsranger-app:
+    build: .
+    container_name: vhsranger_app
+    restart: unless-stopped
+    ports:
+      - "18003:3098" # External port : Internal port
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      - ./backups:/app/backups
+    env_file:
+        - .env
+    depends_on:
+      - mongodb
+
+  # Database service
+  mongodb:
+    image: mongo:latest
+    container_name: vhsranger_db
+    restart: unless-stopped
+    volumes:
+      - ./mongo_data:/data/db
+
+volumes:
+  mongo_data:

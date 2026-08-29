@@ -1,0 +1,71 @@
+const CACHE_NAME = 'vhsranger-v1.0';
+
+const STATIC_ASSETS = [
+  '<%= baseUrl %>/',
+  '<%= baseUrl %>/styles/tailwind.css',
+  '<%= baseUrl %>/manifest.json',
+  '<%= baseUrl %>/ressources/icone-192.png',
+  '<%= baseUrl %>/ressources/icone-512.png'
+];
+
+
+self.addEventListener('install', event => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Caching static assets');
+      return cache.addAll(STATIC_ASSETS);
+    })
+  );
+});
+
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames =>
+      Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      )
+    )
+  );
+  return self.clients.claim();
+});
+
+
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+
+  if (event.request.method !== 'GET') return;
+
+  const dynamicRoutes = [
+    // Auth
+    '<%= baseUrl %>/login', '<%= baseUrl %>/logout', '<%= baseUrl %>/setup',
+    // Collections
+    '<%= baseUrl %>/collection', '<%= baseUrl %>/wishlist',
+    '<%= baseUrl %>/vhs/',
+    // Add / confirmation
+    '<%= baseUrl %>/add-vhs', '<%= baseUrl %>/confirm-vhs/', '<%= baseUrl %>/save-vhs',
+    // search
+    '<%= baseUrl %>/search-tmdb',
+    // internals API
+    '<%= baseUrl %>/api/',
+    // Admin
+    '<%= baseUrl %>/admin', '<%= baseUrl %>/settings',
+    // Backup
+    '<%= baseUrl %>/backup'
+  ];
+
+  const isDynamic = dynamicRoutes.some(route => url.pathname.startsWith(route));
+  if (isDynamic) return;
+
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
+  );
+});

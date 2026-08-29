@@ -1,0 +1,104 @@
+<!-- Duplicate Check Modal -->
+<div id="duplicateModal" class="fixed inset-0 z-[200] hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="card-theme w-full max-w-lg rounded-3xl p-8 shadow-2xl relative animate-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+
+        <div class="text-center mb-6 flex-shrink-0">
+            <div class="w-14 h-14 rounded-full bg-yellow-500/10 text-yellow-500 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-circle-exclamation text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-black mb-1">Bereits vorhanden?</h2>
+            <p class="text-sm opacity-60" id="dupSubtitle">Diese Kassette scheint bereits in deiner Sammlung zu sein. Meinst du einen dieser Einträge?</p>
+        </div>
+
+        <div id="duplicateList" class="space-y-3 overflow-y-auto flex-grow mb-6 pr-1"></div>
+
+        <div class="flex flex-col gap-2 flex-shrink-0">
+            <button id="dupNoBtn"
+                class="w-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-bold py-3 rounded-xl transition-all active:scale-95">
+                Nein – als neuen Eintrag anlegen
+            </button>
+            <button onclick="closeDuplicateModal()"
+                class="w-full text-sm opacity-40 hover:opacity-70 py-2 transition-opacity">
+                Abbrechen
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let _dupFormSubmitFn = null;
+
+    function closeDuplicateModal() {
+        document.getElementById('duplicateModal').classList.add('hidden');
+        _dupFormSubmitFn = null;
+    }
+
+    async function checkDuplicate(title, director, excludeId, onNoDuplicate) {
+        if (!title) { onNoDuplicate(); return; }
+        try {
+            const params = new URLSearchParams({ title });
+            if (director) params.set('director', director);
+            if (excludeId) params.set('excludeId', excludeId);
+            const res = await fetch(`<%= baseUrl %>/api/check-duplicate?${params}`);
+            const data = await res.json();
+
+            if (!data.duplicate) { onNoDuplicate(); return; }
+
+            _dupFormSubmitFn = onNoDuplicate;
+
+            // Build match list
+            const list = document.getElementById('duplicateList');
+            list.innerHTML = '';
+            data.matches.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center gap-4 p-4 rounded-2xl bg-black/5 dark:bg-white/5';
+                item.innerHTML = `
+                    <img src="${m.cover_image || ''}" alt="" class="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-black/10">
+                    <div class="min-w-0 flex-grow">
+                        <p class="font-bold truncate">${m.title}</p>
+                        <p class="text-sm opacity-60 truncate">${m.director || ''}</p>
+                        <p class="text-xs opacity-40 mt-0.5">${[m.year, m.distributor, m.format_type].filter(Boolean).join(' · ')} · Menge: ${m.quantity || 1}</p>
+                    </div>
+                    <button data-id="${m._id}" data-redirect="/vhs/${m._id}"
+                        class="dup-increment-btn flex-shrink-0 bg-primary-theme hover:brightness-110 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all active:scale-95 whitespace-nowrap">
+                        <i class="fa-solid fa-plus mr-1"></i>Menge +1
+                    </button>`;
+                list.appendChild(item);
+            });
+
+            const subtitle = data.matches.length === 1
+                ? 'Diese Kassette scheint bereits in deiner Sammlung zu sein. Meinst du diesen Eintrag?'
+                : `Es gibt ${data.matches.length} Einträge mit diesem Titel. Welchen möchtest du erhöhen?`;
+            document.getElementById('dupSubtitle').textContent = subtitle;
+
+            document.getElementById('duplicateModal').classList.remove('hidden');
+        } catch (e) {
+            onNoDuplicate();
+        }
+    }
+
+    // Event delegation for all increment buttons
+    document.getElementById('duplicateList').addEventListener('click', async (e) => {
+        const btn = e.target.closest('.dup-increment-btn');
+        if (!btn) return;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+        try {
+            const res = await fetch(`<%= baseUrl %>/api/increment-quantity/${btn.dataset.id}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                closeDuplicateModal();
+                window.location.href = '<%= baseUrl %>' + data.redirectUrl;
+            }
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-plus mr-1"></i>Menge +1';
+        }
+    });
+
+    document.getElementById('dupNoBtn').addEventListener('click', () => {
+        const fn = _dupFormSubmitFn;
+        closeDuplicateModal();
+        if (fn) fn();
+    });
+</script>
