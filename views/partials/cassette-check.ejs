@@ -1,0 +1,81 @@
+<!-- Cassette Number Collision Modal -->
+<div id="cassetteModal" class="fixed inset-0 z-[200] hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="card-theme w-full max-w-lg rounded-3xl p-8 shadow-2xl relative animate-in zoom-in duration-200">
+
+        <div class="text-center mb-6">
+            <div class="w-14 h-14 rounded-full bg-yellow-500/10 text-yellow-500 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-tag text-2xl"></i>
+            </div>
+            <h2 class="text-xl font-black mb-1">Kassettennummer bereits vergeben</h2>
+            <p class="text-sm opacity-60">
+                Die Nummer <span id="cassetteNumberLabel" class="font-bold"></span> ist bereits vergeben an:
+                <span id="cassetteExistingTitles" class="font-bold"></span>.
+                Ist das dieselbe physische Kassette?
+            </p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <button id="cassetteSameBtn"
+                class="w-full bg-primary-theme text-white hover:brightness-110 font-bold py-3 rounded-xl transition-all active:scale-95">
+                Ja – gehört zur selben Kassette
+            </button>
+            <button id="cassetteSuffixBtn"
+                class="w-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-bold py-3 rounded-xl transition-all active:scale-95">
+                Nein – andere Kassette (<span id="cassetteSuggestion"></span> verwenden)
+            </button>
+            <button onclick="closeCassetteModal()"
+                class="w-full text-sm opacity-40 hover:opacity-70 py-2 transition-opacity">
+                Abbrechen
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let _cassetteResolveFn = null;
+    let _cassetteInputEl = null;
+    let _cassetteSuggestion = '';
+
+    function closeCassetteModal() {
+        document.getElementById('cassetteModal').classList.add('hidden');
+        _cassetteResolveFn = null;
+        _cassetteInputEl = null;
+    }
+
+    async function checkCassetteNumber(cassetteNumber, excludeId, inputEl, onProceed) {
+        const val = (cassetteNumber || '').trim();
+        if (!val) { onProceed(); return; }
+        try {
+            const params = new URLSearchParams({ cassette_number: val });
+            if (excludeId) params.set('excludeId', excludeId);
+            const res = await fetch(`<%= baseUrl %>/api/check-cassette-number?${params}`);
+            const data = await res.json();
+
+            if (!data.taken) { onProceed(); return; }
+
+            _cassetteResolveFn = onProceed;
+            _cassetteInputEl = inputEl;
+            _cassetteSuggestion = data.suggestion;
+
+            document.getElementById('cassetteNumberLabel').textContent = val;
+            document.getElementById('cassetteExistingTitles').textContent = data.titles.join(', ');
+            document.getElementById('cassetteSuggestion').textContent = data.suggestion;
+            document.getElementById('cassetteModal').classList.remove('hidden');
+        } catch (e) {
+            onProceed();
+        }
+    }
+
+    document.getElementById('cassetteSameBtn').addEventListener('click', () => {
+        const fn = _cassetteResolveFn;
+        closeCassetteModal();
+        if (fn) fn();
+    });
+
+    document.getElementById('cassetteSuffixBtn').addEventListener('click', () => {
+        if (_cassetteInputEl) _cassetteInputEl.value = _cassetteSuggestion;
+        const fn = _cassetteResolveFn;
+        closeCassetteModal();
+        if (fn) fn();
+    });
+</script>

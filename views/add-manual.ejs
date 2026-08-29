@@ -351,17 +351,22 @@
         const form = document.querySelector('form');
         const title    = form.querySelector('[name="title"]')?.value || '';
         const director = form.querySelector('[name="director"]')?.value || '';
-        const cassetteNumber = form.querySelector('[name="cassette_number"]')?.value || '';
+        const cassetteInput = form.querySelector('[name="cassette_number"]');
 
         const doSubmit = () => {
             document.getElementById('inWishlistInput').value = target === 'wishlist' ? 'true' : 'false';
             form.submit();
         };
 
-        checkDuplicate(title, director, null, doSubmit, cassetteNumber);
+        const afterDuplicateCheck = () => {
+            checkCassetteNumber(cassetteInput?.value, null, cassetteInput, doSubmit);
+        };
+
+        checkDuplicate(title, director, null, afterDuplicateCheck, cassetteInput?.value);
     }
 </script>
 
 <%- include('partials/duplicate-check') %>
+<%- include('partials/cassette-check') %>
 
 <%- include('partials/footer') %>

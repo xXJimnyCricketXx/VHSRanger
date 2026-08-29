@@ -700,6 +700,45 @@ router.get('/api/check-duplicate', requireAuth, async (req, res) => {
     }
 });
 
+// Detects when a cassette_number is already used by a DIFFERENT title.
+// This is intentionally allowed (several films can share one physical tape),
+// but two independently-numbered collections can also collide by coincidence -
+// the frontend asks the user which case it is before saving.
+router.get('/api/check-cassette-number', requireAuth, async (req, res) => {
+    try {
+        const { cassette_number, excludeId } = req.query;
+        const val = (cassette_number || '').trim();
+        if (!val) return res.json({ taken: false });
+
+        const adminId = await getAdminId();
+        const escReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const exactReg = new RegExp(`^${escReg(val)}$`, 'i');
+
+        const query = { owner: adminId, kind: 'VHS', cassette_number: exactReg };
+        if (excludeId) query._id = { $ne: excludeId };
+
+        const matches = await Item.find(query).select('title').lean();
+        if (!matches.length) return res.json({ taken: false });
+
+        const variantReg = new RegExp(`^${escReg(val)}-(\\d+)$`, 'i');
+        const variants = await Item.find({ owner: adminId, kind: 'VHS', cassette_number: variantReg }).select('cassette_number').lean();
+        let maxSuffix = 1;
+        variants.forEach(v => {
+            const m = v.cassette_number.match(variantReg);
+            if (m) maxSuffix = Math.max(maxSuffix, parseInt(m[1], 10));
+        });
+
+        res.json({
+            taken: true,
+            titles: [...new Set(matches.map(m => m.title))],
+            suggestion: `${val}-${maxSuffix + 1}`
+        });
+    } catch (err) {
+        console.error(err);
+        res.json({ taken: false });
+    }
+});
+
 // Increment quantity of existing tape (used after duplicate confirmation)
 router.post('/api/increment-quantity/:id', requireAuth, requireAdmin, async (req, res) => {
     try {

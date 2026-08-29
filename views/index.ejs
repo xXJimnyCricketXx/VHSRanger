@@ -165,17 +165,24 @@
                             </h3>
                         </div>
                     </div>
-                <% } else if (tW) { %>
-                    <div class="card-theme p-6 rounded-2xl flex items-center gap-4 transition-all hover:scale-[1.02] min-w-0 md:col-span-2">
+                <% } else if (tW) {
+                    const tWClickable = tW.data.count > 0;
+                    const tWHref = id === 'genre'
+                        ? `${baseUrl}/collection?genre=${encodeURIComponent(tW.data.name)}`
+                        : `${baseUrl}/collection?search=${encodeURIComponent(tW.data.name)}`;
+                    const TWTag = tWClickable ? 'a' : 'div';
+                %>
+                    <<%= TWTag %> <% if (tWClickable) { %>href="<%= tWHref %>"<% } %>
+                        class="group card-theme p-6 rounded-2xl flex items-center gap-4 transition-all hover:scale-[1.02] min-w-0 md:col-span-2 <%= tWClickable ? 'hover:border-primary-theme' : '' %>">
                         <div class="w-12 h-12 rounded-full <%= tW.color %> flex items-center justify-center text-xl flex-shrink-0">
                             <i class="fa-solid <%= tW.icon %> fa-fw"></i>
                         </div>
                         <div class="min-w-0">
                             <p class="opacity-60 font-medium text-xs uppercase tracking-wider truncate"><%= tW.label %></p>
-                            <h3 class="text-lg font-bold truncate"><%= tW.data.name %></h3>
+                            <h3 class="text-lg font-bold truncate <%= tWClickable ? 'group-hover:text-primary-theme transition-colors' : '' %>"><%= tW.data.name %></h3>
                             <p class="text-xs opacity-60 truncate"><%= t('stats.owned_times', { count: tW.data.count }) %></p>
                         </div>
-                    </div>
+                    </<%= TWTag %>>
                 <% }
             }); %>
         </div>

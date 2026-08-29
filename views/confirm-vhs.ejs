@@ -533,6 +533,7 @@
 </style>
 
 <%- include('partials/duplicate-check') %>
+<%- include('partials/cassette-check') %>
 
 <script>
     function cvSubmit(wishlistVal) {
@@ -540,17 +541,21 @@
         const title    = form.querySelector('[name="title"]')?.value || '';
         const director = form.querySelector('[name="director"]')?.value || '';
         const mongoId  = form.querySelector('[name="mongo_id"]')?.value || '';
-        const cassetteNumber = form.querySelector('[name="cassette_number"]')?.value || '';
+        const cassetteInput = form.querySelector('[name="cassette_number"]');
 
         const doSubmit = () => {
             document.getElementById('cvInWishlist').value = wishlistVal;
             form.submit();
         };
 
-        // Skip check when editing an existing entry
+        // Skip checks when editing an existing entry
         if (mongoId) { doSubmit(); return; }
 
-        checkDuplicate(title, director, null, doSubmit, cassetteNumber);
+        const afterDuplicateCheck = () => {
+            checkCassetteNumber(cassetteInput?.value, null, cassetteInput, doSubmit);
+        };
+
+        checkDuplicate(title, director, null, afterDuplicateCheck, cassetteInput?.value);
     }
 </script>
 
