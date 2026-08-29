@@ -33,12 +33,13 @@
         _dupFormSubmitFn = null;
     }
 
-    async function checkDuplicate(title, director, excludeId, onNoDuplicate) {
+    async function checkDuplicate(title, director, excludeId, onNoDuplicate, cassetteNumber) {
         if (!title) { onNoDuplicate(); return; }
         try {
             const params = new URLSearchParams({ title });
             if (director) params.set('director', director);
             if (excludeId) params.set('excludeId', excludeId);
+            params.set('cassette_number', cassetteNumber || '');
             const res = await fetch(`<%= baseUrl %>/api/check-duplicate?${params}`);
             const data = await res.json();
 
@@ -57,7 +58,7 @@
                     <div class="min-w-0 flex-grow">
                         <p class="font-bold truncate">${m.title}</p>
                         <p class="text-sm opacity-60 truncate">${m.director || ''}</p>
-                        <p class="text-xs opacity-40 mt-0.5">${[m.year, m.distributor, m.format_type].filter(Boolean).join(' · ')} · Menge: ${m.quantity || 1}</p>
+                        <p class="text-xs opacity-40 mt-0.5">${[m.year, m.cassette_number ? `#${m.cassette_number}` : null, m.distributor, m.format_type].filter(Boolean).join(' · ')} · Menge: ${m.quantity || 1}</p>
                     </div>
                     <button data-id="${m._id}" data-redirect="/vhs/${m._id}"
                         class="dup-increment-btn flex-shrink-0 bg-primary-theme hover:brightness-110 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all active:scale-95 whitespace-nowrap">

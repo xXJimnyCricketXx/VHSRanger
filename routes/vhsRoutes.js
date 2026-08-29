@@ -670,7 +670,7 @@ router.post('/api/vhs/:id/move-to-collection', requireAuth, requireAdmin, async 
 // Duplicate check
 router.get('/api/check-duplicate', requireAuth, async (req, res) => {
     try {
-        const { title, director, excludeId } = req.query;
+        const { title, director, excludeId, cassette_number } = req.query;
         if (!title) return res.json({ duplicate: false });
 
         const adminId = await getAdminId();
@@ -678,7 +678,12 @@ router.get('/api/check-duplicate', requireAuth, async (req, res) => {
         const escReg = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const titleReg = new RegExp(`^${escReg(title.trim())}$`, 'i');
 
-        const query = { owner: adminId, kind: 'VHS', title: titleReg };
+        // Same title but a different cassette_number means a different physical
+        // tape, not a duplicate entry - only flag it when both title and
+        // cassette_number match (including both being empty/unassigned).
+        const cassetteReg = new RegExp(`^${escReg((cassette_number || '').trim())}$`, 'i');
+
+        const query = { owner: adminId, kind: 'VHS', title: titleReg, cassette_number: cassetteReg };
         if (director) query.director = new RegExp(`^${escReg(director.trim())}$`, 'i');
         if (excludeId) query._id = { $ne: excludeId };
 

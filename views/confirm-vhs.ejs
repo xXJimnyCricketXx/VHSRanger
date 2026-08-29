@@ -540,6 +540,7 @@
         const title    = form.querySelector('[name="title"]')?.value || '';
         const director = form.querySelector('[name="director"]')?.value || '';
         const mongoId  = form.querySelector('[name="mongo_id"]')?.value || '';
+        const cassetteNumber = form.querySelector('[name="cassette_number"]')?.value || '';
 
         const doSubmit = () => {
             document.getElementById('cvInWishlist').value = wishlistVal;
@@ -549,7 +550,7 @@
         // Skip check when editing an existing entry
         if (mongoId) { doSubmit(); return; }
 
-        checkDuplicate(title, director, null, doSubmit);
+        checkDuplicate(title, director, null, doSubmit, cassetteNumber);
     }
 </script>
 

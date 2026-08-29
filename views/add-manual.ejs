@@ -351,13 +351,14 @@
         const form = document.querySelector('form');
         const title    = form.querySelector('[name="title"]')?.value || '';
         const director = form.querySelector('[name="director"]')?.value || '';
+        const cassetteNumber = form.querySelector('[name="cassette_number"]')?.value || '';
 
         const doSubmit = () => {
             document.getElementById('inWishlistInput').value = target === 'wishlist' ? 'true' : 'false';
             form.submit();
         };
 
-        checkDuplicate(title, director, null, doSubmit);
+        checkDuplicate(title, director, null, doSubmit, cassetteNumber);
     }
 </script>
 
