@@ -35,5 +35,5 @@
   <Config Name="HTTPS Production Mode" Target="PROD" Default="false" Mode="" Description="Change to true ONLY if you use HTTPS via a reverse proxy." Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
   <Config Name="VHS Port Variable" Target="VHS_PORT" Default="3098" Mode="" Description="Internal port variable required by the app." Type="Variable" Display="always" Required="true" Mask="false">3098</Config>
   <Config Name="Base URL" Target="BASE_URL" Default="" Mode="" Description="Base URL for serving on a sub-path, leave empty to serve from root." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
-  <Config Name="TMDb API Key" Target="TMDB_API_KEY" Default="" Mode="" Description="Your TMDb API Key for metadata lookups." Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="TMDb API Key" Target="TMDB_API_KEY" Default="" Mode="" Description="Required for metadata lookups. Use the TMDb 'API Read Access Token' (long string starting with eyJ...), NOT the shorter 'API Key'." Type="Variable" Display="always" Required="false" Mask="true"></Config>
 </Container>

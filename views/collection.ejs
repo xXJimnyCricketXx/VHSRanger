@@ -71,24 +71,25 @@
                                     <%= tape.director || 'Inconnu' %>
                                 </p>
 
-                                <% if(tape.year || tape.is_original === false) { %>
-                                    <div class="flex items-center gap-1.5 mt-1 min-w-0 overflow-hidden">
-                                        <% if(tape.year) { %>
-                                            <span class="text-[9px] md:text-[10px] opacity-60 bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded border border-transparent truncate font-medium transition-colors">
-                                                <%= tape.year %>
-                                            </span>
-                                        <% } %>
-                                        <% if(tape.is_original === false) { %>
-                                            <div class="flex items-center gap-1 min-w-0 truncate" title="<%= t('media.recording') %>">
-                                                <span
-                                                    class="w-1.5 h-1.5 rounded-full bg-primary-theme inline-block flex-shrink-0"></span>
-                                                <span class="text-[9px] md:text-[10px] opacity-60 truncate">
-                                                    <%= t('media.recording') %>
-                                                </span>
-                                            </div>
-                                        <% } %>
+                                <% if(tape.year) { %>
+                                    <div class="mb-1.5 min-w-0 overflow-hidden">
+                                        <span class="text-[9px] md:text-[10px] opacity-60 bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded border border-transparent truncate font-medium transition-colors">
+                                            <%= tape.year %>
+                                        </span>
                                     </div>
                                 <% } %>
+
+                                <div class="flex items-center justify-between gap-2 min-w-0">
+                                    <span class="text-[9px] md:text-[10px] opacity-50 font-mono truncate">
+                                        <%= tape.cassette_number || '–' %>
+                                    </span>
+                                    <div class="flex items-center gap-1 min-w-0 flex-shrink-0">
+                                        <span class="w-1.5 h-1.5 rounded-full <%= tape.is_original === false ? 'bg-primary-theme' : 'bg-amber-500' %> inline-block flex-shrink-0"></span>
+                                        <span class="text-[9px] md:text-[10px] opacity-60 truncate">
+                                            <%= tape.is_original === false ? t('vhs.recording_badge') : t('vhs.original_badge') %>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </a>
                     </div>

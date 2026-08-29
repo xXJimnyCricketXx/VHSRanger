@@ -83,6 +83,7 @@
         .col-cond  { width: 50px; text-align: center; }
         .col-loc   { color: #777; font-size: 10px; }
         .col-orig  { width: 56px; text-align: center; font-size: 9px; color: #555; }
+        .col-cassette { width: 70px; text-align: center; font-family: monospace; color: #555; }
 
         .no-value { color: #ccc; }
 
@@ -187,15 +188,16 @@
         <thead>
             <tr>
                 <th class="col-nr">#</th>
-                <th class="col-artist">Regisseur</th>
                 <th class="col-title">Titel</th>
                 <th class="col-year">Jahr</th>
+                <th class="col-artist">Regisseur</th>
                 <th class="col-label">Verleih</th>
                 <th class="col-genre">Genre</th>
-                <th class="col-value">Wert</th>
                 <th class="col-cond">Zustand</th>
+                <th class="col-value">Wert</th>
                 <th class="col-orig">Typ</th>
                 <th class="col-loc">Standort</th>
+                <th class="col-cassette">Kassette #</th>
             </tr>
         </thead>
         <tbody>
@@ -210,17 +212,18 @@
             %>
             <tr>
                 <td class="col-nr"><%= i + 1 %></td>
-                <td class="col-artist"><%= tape.director %></td>
                 <td class="col-title"><%= tape.title %></td>
                 <td class="col-year"><%= tape.year || '–' %></td>
+                <td class="col-artist"><%= tape.director %></td>
                 <td class="col-label"><%= tape.distributor || '–' %></td>
                 <td class="col-genre"><%= tape.genre || (tape.genres && tape.genres[0]) || '–' %></td>
+                <td class="col-cond"><%= tape.condition ? (t('vhs.condition.' + tape.condition) || tape.condition) : '–' %></td>
                 <td class="col-value">
                     <% if (price) { %><%= price %><% } else { %><span class="no-value">–</span><% } %>
                 </td>
-                <td class="col-cond"><%= tape.condition ? (t('vhs.condition.' + tape.condition) || tape.condition) : '–' %></td>
                 <td class="col-orig"><%= tape.is_original === false ? t('vhs.recording_badge') : t('vhs.original_badge') %></td>
                 <td class="col-loc"><%= tape.location || '' %></td>
+                <td class="col-cassette"><%= tape.cassette_number || '–' %></td>
             </tr>
             <% }) %>
         </tbody>

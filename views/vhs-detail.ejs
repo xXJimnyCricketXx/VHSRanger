@@ -119,17 +119,18 @@
                     <% if(tape.cast && tape.cast.length > 0) { %>
                         <div class="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
                             <% tape.cast.forEach((member) => { %>
-                                <div class="flex-shrink-0 w-20 sm:w-24 text-center">
-                                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 mb-2 shadow-md mx-auto">
+                                <a href="<%= baseUrl %>/collection?search=<%= encodeURIComponent(member.name) %>"
+                                    class="group flex-shrink-0 w-20 sm:w-24 text-center" title="<%= member.name %>">
+                                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 mb-2 shadow-md mx-auto ring-2 ring-transparent group-hover:ring-primary-theme transition-all">
                                         <% if (member.photo) { %>
                                             <img src="<%= member.photo %>" class="w-full h-full object-cover">
                                         <% } else { %>
                                             <div class="w-full h-full flex items-center justify-center opacity-30"><i class="fa-solid fa-user text-2xl"></i></div>
                                         <% } %>
                                     </div>
-                                    <p class="text-xs font-bold truncate"><%= member.name %></p>
+                                    <p class="text-xs font-bold truncate group-hover:text-primary-theme transition-colors"><%= member.name %></p>
                                     <p class="text-[10px] opacity-50 truncate"><%= member.character %></p>
-                                </div>
+                                </a>
                             <% }) %>
                         </div>
                     <% } else { %>
