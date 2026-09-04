@@ -189,6 +189,22 @@ function countTotalFilms(items) {
     return items.reduce((acc, i) => acc + (i.quantity || 1), 0);
 }
 
+// Collapses multiple copies of the same film (several cassettes, or one
+// cassette with quantity > 1) down to one entry, so "favorite director/actor/genre"
+// stats reflect distinct films owned rather than physical copy count.
+function dedupeFilms(items) {
+    const seen = new Set();
+    const result = [];
+    items.forEach(item => {
+        const key = item.tmdb_id ? `tmdb:${item.tmdb_id}` : `title:${(item.title || '').trim().toLowerCase()}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            result.push(item);
+        }
+    });
+    return result;
+}
+
 async function getAdminId() {
     const admin = await User.findOne({ isAdmin: true }).select('_id');
     return admin ? admin._id : null;
@@ -279,9 +295,10 @@ router.get('/', requireAuth, async (req, res) => {
             return { name: topName, count: topCount };
         };
 
-        stats.director = getTop(allItems, 'director');
-        stats.genre = getTop(allItems, 'genre');
-        stats.actor = getTopActor(allItems);
+        const uniqueFilms = dedupeFilms(allItems);
+        stats.director = getTop(uniqueFilms, 'director');
+        stats.genre = getTop(uniqueFilms, 'genre');
+        stats.actor = getTopActor(uniqueFilms);
 
         let latestQuery = { owner: adminId, in_wishlist: false };
         applyVisibilityFilter(latestQuery, res.locals.isAdmin, settings);
@@ -315,11 +332,12 @@ router.get('/stats', requireAuth, async (req, res) => {
             return p ? a + p * (i.quantity || 1) : a;
         }, 0);
 
-        // Genre distribution (use genres array, fallback to genre string)
+        // Genre distribution (use genres array, fallback to genre string).
+        // Counted per distinct film, not per physical copy/cassette.
         const genreMap = {};
-        allItems.forEach(item => {
+        dedupeFilms(allItems).forEach(item => {
             const gs = (item.genres && item.genres.length) ? item.genres : (item.genre ? [item.genre] : []);
-            gs.forEach(g => { if (g) genreMap[g] = (genreMap[g] || 0) + (item.quantity || 1); });
+            gs.forEach(g => { if (g) genreMap[g] = (genreMap[g] || 0) + 1; });
         });
         const genres = Object.entries(genreMap).sort((a, b) => b[1] - a[1]).slice(0, 15);
 
