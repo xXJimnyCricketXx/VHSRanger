@@ -851,7 +851,7 @@ router.post('/api/vhs/:id/estimate-price', requireAuth, requireAdmin, async (req
                 'estimated_price.source': 'ebay_estimate',
                 'estimated_price.updated_at': new Date()
             }
-        });
+        }, { strict: false });
 
         res.json({ success: true, ...result });
     } catch (err) {
