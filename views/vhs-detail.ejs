@@ -334,30 +334,48 @@
                         <div class="text-sm opacity-40 italic">
                             <%= t('detail.no_estimate_recording') %>
                         </div>
-                    <% } else if (tape.estimated_price && tape.estimated_price.value) { %>
-                        <div class="flex flex-col gap-1">
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-2xl font-black text-primary-theme">
-                                    <%=
-                                        new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', {
-                                            style: 'currency',
-                                            currency: tape.estimated_price.currency || 'EUR',
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2
-                                        }).format(tape.estimated_price.value * (tape.quantity || 1))
-                                    %>
-                                </span>
-                                <% if (tape.estimated_price.updated_at) { %>
-                                <span class="text-xs opacity-40">
-                                    Stand: <%= new Date(tape.estimated_price.updated_at).toLocaleDateString(currentLng === 'de' ? 'de-DE' : 'en-US') %>
-                                </span>
-                                <% } %>
-                            </div>
-                        </div>
                     <% } else { %>
-                        <div class="text-sm opacity-40 italic">
-                            <%= t('detail.no_estimate') %>
+                        <div id="priceDisplay">
+                            <% if (tape.estimated_price && tape.estimated_price.value) { %>
+                                <div class="flex flex-col gap-1">
+                                    <div class="flex items-baseline gap-2 flex-wrap">
+                                        <span class="text-2xl font-black text-primary-theme">
+                                            <%=
+                                                new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', {
+                                                    style: 'currency',
+                                                    currency: tape.estimated_price.currency || 'EUR',
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2
+                                                }).format(tape.estimated_price.value * (tape.quantity || 1))
+                                            %>
+                                        </span>
+                                        <% if (tape.estimated_price.updated_at) { %>
+                                        <span class="text-xs opacity-40">
+                                            Stand: <%= new Date(tape.estimated_price.updated_at).toLocaleDateString(currentLng === 'de' ? 'de-DE' : 'en-US') %>
+                                        </span>
+                                        <% } %>
+                                        <% if (tape.estimated_price.source === 'ebay_estimate') { %>
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 opacity-60">geschätzt · eBay-Angebote</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div class="text-sm opacity-40 italic">
+                                    <%= t('detail.no_estimate') %>
+                                </div>
+                            <% } %>
                         </div>
+
+                        <% if (ebayEnabled && user.isAdmin) { %>
+                        <div class="mt-3 pt-3 border-t border-black/5 dark:border-white/10">
+                            <button id="estimateBtn" onclick="estimatePrice()"
+                                class="text-xs bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-2 w-full justify-center font-bold">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span id="estimateBtnLabel">Preis schätzen (eBay-Angebote)</span>
+                            </button>
+                            <p class="text-[10px] opacity-40 mt-1.5 text-center">Grober Anhaltspunkt aus aktiven Angeboten, kein Verkaufspreis.</p>
+                        </div>
+                        <% } %>
                     <% } %>
                 </div>
             </div>
@@ -371,6 +389,26 @@
             confirm_delete: <%- JSON.stringify(t('detail.confirm_delete')) %>,
             error_server: <%- JSON.stringify(t('messages.generic_error')) %>
         };
+
+        async function estimatePrice() {
+            const btn = document.getElementById('estimateBtn');
+            const label = document.getElementById('estimateBtnLabel');
+            btn.disabled = true;
+            label.textContent = 'Suche läuft…';
+            try {
+                const res = await fetch(`<%= baseUrl %>/api/vhs/<%= tape._id %>/estimate-price`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                    return;
+                }
+                label.textContent = data.error === 'no_results' ? 'Keine Angebote gefunden' : 'Fehler bei der Suche';
+                setTimeout(() => { label.textContent = 'Preis schätzen (eBay-Angebote)'; btn.disabled = false; }, 3000);
+            } catch (e) {
+                label.textContent = 'Fehler bei der Suche';
+                setTimeout(() => { label.textContent = 'Preis schätzen (eBay-Angebote)'; btn.disabled = false; }, 3000);
+            }
+        }
 
         function switchImage(url, text) {
             const mainImg = document.getElementById('mainImage');

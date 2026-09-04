@@ -41,6 +41,66 @@ function tmdbCountry(locale) {
     return TMDB_COUNTRY_MAP[locale] || 'US';
 }
 
+const EBAY_BASE = 'https://api.ebay.com';
+let ebayTokenCache = { token: null, expiresAt: 0 };
+
+// Client-credentials OAuth token for the Browse API (application-level, no user login).
+// Cached in-memory until shortly before expiry to avoid a token request per search.
+async function ebayToken() {
+    const appId = process.env.EBAY_APP_ID;
+    const certId = process.env.EBAY_CERT_ID;
+    if (!appId || !certId) return null;
+
+    if (ebayTokenCache.token && Date.now() < ebayTokenCache.expiresAt) {
+        return ebayTokenCache.token;
+    }
+
+    const credentials = Buffer.from(`${appId}:${certId}`).toString('base64');
+    const res = await axios.post(
+        `${EBAY_BASE}/identity/v1/oauth2/token`,
+        'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': `Basic ${credentials}` } }
+    );
+
+    ebayTokenCache = {
+        token: res.data.access_token,
+        expiresAt: Date.now() + (res.data.expires_in - 60) * 1000
+    };
+    return ebayTokenCache.token;
+}
+
+// Rough price estimate from ACTIVE listings (asking prices / running bids) -
+// not a real sales-history value. Returns min/median/max of found prices.
+async function ebaySearchPrices(query) {
+    const token = await ebayToken();
+    if (!token) return null;
+
+    const res = await axios.get(`${EBAY_BASE}/buy/browse/v1/item_summary/search`, {
+        headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_DE' },
+        params: { q: query, limit: 30, filter: 'buyingOptions:{FIXED_PRICE|AUCTION}' }
+    });
+
+    const items = res.data.itemSummaries || [];
+    const prices = items
+        .map(i => i.price && parseFloat(i.price.value))
+        .filter(v => v && v > 0)
+        .sort((a, b) => a - b);
+
+    if (!prices.length) return { count: 0 };
+
+    const withPrice = items.find(i => i.price);
+    const mid = Math.floor(prices.length / 2);
+    const median = prices.length % 2 !== 0 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2;
+
+    return {
+        count: prices.length,
+        min: prices[0],
+        max: prices[prices.length - 1],
+        median: Math.round(median * 100) / 100,
+        currency: (withPrice && withPrice.price.currency) || 'EUR'
+    };
+}
+
 function posterUrl(path) {
     return path ? `${TMDB_IMG_BASE}/w500${path}` : '';
 }
@@ -767,6 +827,39 @@ router.post('/api/increment-quantity/:id', requireAuth, requireAdmin, async (req
     }
 });
 
+// Rough price estimate from active eBay listings (asking prices, not sales data -
+// see the "estimate price" button on the detail page for the caveat shown to the user).
+router.post('/api/vhs/:id/estimate-price', requireAuth, requireAdmin, async (req, res) => {
+    try {
+        if (!process.env.EBAY_APP_ID || !process.env.EBAY_CERT_ID) {
+            return res.status(400).json({ success: false, error: 'not_configured' });
+        }
+
+        const adminId = await getAdminId();
+        const tape = await Item.findOne({ _id: req.params.id, owner: adminId });
+        if (!tape) return res.status(404).json({ success: false });
+
+        const result = await ebaySearchPrices(`${tape.title} VHS`);
+        if (!result || !result.count) {
+            return res.json({ success: false, error: 'no_results' });
+        }
+
+        await Item.updateOne({ _id: tape._id }, {
+            $set: {
+                'estimated_price.value': result.median,
+                'estimated_price.currency': result.currency,
+                'estimated_price.source': 'ebay_estimate',
+                'estimated_price.updated_at': new Date()
+            }
+        });
+
+        res.json({ success: true, ...result });
+    } catch (err) {
+        console.error('[eBay estimate] error:', err.message);
+        res.status(500).json({ success: false, error: 'api_error' });
+    }
+});
+
 // Print routes
 router.get('/print/collection', requireAuth, async (req, res) => {
     try {
@@ -901,8 +994,9 @@ router.get('/vhs/:id', requireAuth, async (req, res) => {
         const tape = await Item.findById(req.params.id);
         if (!tape) return res.redirect('/collection');
         const tapeFormatted = formatForView(tape);
+        const ebayEnabled = !!(process.env.EBAY_APP_ID && process.env.EBAY_CERT_ID);
 
-        res.render('vhs-detail', { tape: tapeFormatted, user: res.locals.user, currentType: 'vhs' });
+        res.render('vhs-detail', { tape: tapeFormatted, user: res.locals.user, currentType: 'vhs', ebayEnabled });
     } catch (err) {
         res.redirect('/collection');
     }
