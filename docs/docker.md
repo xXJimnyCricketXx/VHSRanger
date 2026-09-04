@@ -56,6 +56,8 @@ services:
       - PASSJWT=<something>
       - SESSION_SECRET=<something>
       - TMDB_API_KEY=<something>
+      - EBAY_APP_ID=<something>
+      - EBAY_CERT_ID=<something>
     ports:
       - '<external_port>:80'
     volumes:

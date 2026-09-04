@@ -70,6 +70,7 @@ A ready-made template is available at [`unraid-template/vhsranger.xml`](unraid-t
 | `VHS_PORT` | no | Port the app listens on inside the container (default: `3098`) |
 | `BASE_URL` | no | Base path for serving on a sub-path, leave empty to serve from root |
 | `TMDB_API_KEY` | no | TMDb API key — the app works without it, but metadata lookup won't. See [API Configuration](./docs/api-keys.md) |
+| `EBAY_APP_ID` / `EBAY_CERT_ID` | no | eBay Browse API production credentials — enables the "estimate price" button on the detail page (rough estimate from active listings). Get free keys at [developer.ebay.com](https://developer.ebay.com) |
 
 ## Tech Stack
 

@@ -36,4 +36,6 @@
   <Config Name="VHS Port Variable" Target="VHS_PORT" Default="3098" Mode="" Description="Internal port variable required by the app." Type="Variable" Display="always" Required="true" Mask="false">3098</Config>
   <Config Name="Base URL" Target="BASE_URL" Default="" Mode="" Description="Base URL for serving on a sub-path, leave empty to serve from root." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
   <Config Name="TMDb API Key" Target="TMDB_API_KEY" Default="" Mode="" Description="Required for metadata lookups. Use the TMDb 'API Read Access Token' (long string starting with eyJ...), NOT the shorter 'API Key'." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="eBay App ID" Target="EBAY_APP_ID" Default="" Mode="" Description="Optional, enables the 'estimate price' button. Production App ID (Client ID) from developer.ebay.com." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="eBay Cert ID" Target="EBAY_CERT_ID" Default="" Mode="" Description="Optional, enables the 'estimate price' button. Production Cert ID (Client Secret) from developer.ebay.com." Type="Variable" Display="always" Required="false" Mask="true"></Config>
 </Container>
