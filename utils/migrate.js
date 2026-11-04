@@ -1,6 +1,7 @@
 const Item = require('../models/Item');
 const Settings = require('../models/Settings');
 const PRESETS = require('../config/themes');
+const { parseTmdbId } = require('./tmdbId');
 
 const migrateDatabase = async () => {
     try {
@@ -15,6 +16,26 @@ const migrateDatabase = async () => {
             );
 
             console.log(`[MIGRATION] ${result.modifiedCount} old items updated.`);
+        }
+
+        // Editing a tape used to store its TMDb ID as text, which later lookups
+        // by number could not find. Uses the raw driver, because Mongoose would
+        // cast the query value to a number and match nothing.
+        const textIds = await Item.collection
+            .find({ tmdb_id: { $type: 'string' } }, { projection: { tmdb_id: 1 } })
+            .toArray();
+
+        if (textIds.length > 0) {
+            await Item.collection.bulkWrite(textIds.map((doc) => {
+                const id = parseTmdbId(doc.tmdb_id);
+                return {
+                    updateOne: {
+                        filter: { _id: doc._id },
+                        update: id ? { $set: { tmdb_id: id } } : { $unset: { tmdb_id: '' } }
+                    }
+                };
+            }));
+            console.log(`[MIGRATION] ${textIds.length} TMDb IDs converted to numbers.`);
         }
 
         // Consolidate the old per-page-type theme (theme.home.preset /

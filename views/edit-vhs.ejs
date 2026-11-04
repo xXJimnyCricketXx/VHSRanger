@@ -272,7 +272,7 @@
                         <textarea name="comments" rows="2" class="bg-black/5 dark:bg-white/5 border border-transparent rounded-lg focus:ring-primary-theme block w-full p-3 outline-none"><%= tape.comments %></textarea>
                     </div>
 
-                    <input type="hidden" name="cast_json" value='<%- JSON.stringify(tape.cast || []) %>'>
+                    <input type="hidden" name="cast_json" value="<%= JSON.stringify(tape.cast || []) %>">
                     <input type="hidden" name="backdrop_image" value="<%= tape.backdrop_image %>">
                     <input type="hidden" name="trailer_key" value="<%= tape.trailer_key %>">
                     <input type="hidden" name="imdb_id" value="<%= tape.imdb_id %>">

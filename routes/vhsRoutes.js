@@ -9,6 +9,7 @@ const { requireAuth, requireAdmin } = require('../middleware/authMiddleware'); /
 const User = require('../models/User');
 const { TMDB_LANG_MAP, TMDB_COUNTRY_MAP } = require('../config/constants');
 const { applyVisibilityFilter } = require('../utils/visibilityHelper');
+const { parseTmdbId } = require('../utils/tmdbId');
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p';
@@ -655,27 +656,25 @@ router.post('/save-vhs', requireAuth, requireAdmin, async (req, res) => {
         const isBarcodeLocked = barcode_locked === 'on' || barcode_locked === 'true' || barcode_locked === true;
         const isOriginal = is_original === 'true' || is_original === true || is_original === 'on';
 
-        let cast = [];
+        // null means the form sent no usable cast, as opposed to an empty one.
+        let cast = null;
         if (cast_json) {
-            try { cast = JSON.parse(cast_json); } catch (e) { cast = []; }
+            try {
+                const parsed = JSON.parse(cast_json);
+                if (Array.isArray(parsed)) cast = parsed;
+            } catch (e) { /* stays null */ }
         }
 
-        let tape;
-
-        if (mongo_id) {
-            tape = await Item.findById(mongo_id);
-        }
-
-        if (!tape && tmdb_id) {
-            tape = await Item.findOne({ tmdb_id: tmdb_id, owner: adminId });
-        }
+        // Only an explicit mongo_id edits an entry. A second copy of a film has
+        // the same TMDb ID and must become its own entry.
+        const tape = mongo_id ? await Item.findById(mongo_id) : null;
 
         const priceValue = estimated_value !== undefined && estimated_value !== '' ? parseFloat(estimated_value) : null;
 
         const sharedData = {
             title,
             director: director || '',
-            tmdb_id: tmdb_id || undefined,
+            tmdb_id: parseTmdbId(tmdb_id),
             imdb_id: imdb_id || '',
             trailer_key: trailer_key || '',
             year,
@@ -690,7 +689,7 @@ router.post('/save-vhs', requireAuth, requireAdmin, async (req, res) => {
             overview: overview || '',
             tagline: tagline || '',
             backdrop_image: backdrop_image || '',
-            cast,
+            cast: cast || [],
             cover_image,
             user_image,
             is_original: isOriginal,
@@ -717,6 +716,8 @@ router.post('/save-vhs', requireAuth, requireAdmin, async (req, res) => {
             if (user_image && user_image.length > 0) {
                 sharedData.user_image = user_image;
             }
+
+            if (!cast) delete sharedData.cast;
 
             await Item.updateOne(
                 { _id: tape._id },

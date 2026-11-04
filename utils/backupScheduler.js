@@ -4,6 +4,7 @@ const Item = require('../models/Item');
 const User = require('../models/User');
 const LoginLog = require('../models/LoginLog');
 const Settings = require('../models/Settings');
+const { parseTmdbId } = require('./tmdbId');
 
 /**
  * utils/backupScheduler.js
@@ -12,10 +13,16 @@ const Settings = require('../models/Settings');
  * export/import) and, additionally, writes timed snapshots to disk on a
  * schedule read from Settings.backupSchedule, pruning down to the
  * configured retention count.
+ *
+ * A restore first checks the whole backup and writes a safety copy of the
+ * current data. Safety copies do not count towards the retention.
  */
 
 const BACKUP_DIR = path.join(__dirname, '..', 'backups');
-const FILENAME_RE = /^vhsranger_backup_[\d-]+T[\d-]+\.json$/;
+const FILENAME_RE = /^vhsranger_(backup|before_restore)_[\d-]+T[\d-]+\.json$/;
+const BACKUP_PREFIX = 'vhsranger_backup_';
+const SAFETY_PREFIX = 'vhsranger_before_restore_';
+const SAFETY_COPIES_KEPT = 3;
 
 function ensureDir() {
     if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
@@ -35,38 +42,165 @@ async function buildBackupData() {
     };
 }
 
-async function restoreFromData(data) {
-    if (!data || (!data.users && !data.albums)) {
-        throw new Error('Backup file missing required fields');
+function restoreError(message, status) {
+    return Object.assign(new Error(message), { status });
+}
+
+/**
+ * @returns {Error|null} The validation error of a document, null if it is valid.
+ */
+function findInvalid(Model, doc) {
+    try {
+        return new Model(doc).validateSync() || null;
+    } catch (err) {
+        return err;
+    }
+}
+
+function assertValid(Model, doc, label) {
+    const error = findInvalid(Model, doc);
+    if (error) {
+        const fields = Object.keys(error.errors || {}).join(', ');
+        throw restoreError(`Backup contains an invalid entry in ${label}${fields ? `: ${fields}` : ''}`, 400);
+    }
+}
+
+/**
+ * Items from old backups may lack `kind`, and their TMDb ID may be stored as text.
+ */
+function normalizeItem(item) {
+    if (!item || typeof item !== 'object') return item;
+    const clean = { ...item, kind: item.kind || 'VHS' };
+    if (clean.tmdb_id !== undefined) {
+        const id = parseTmdbId(clean.tmdb_id);
+        if (id) clean.tmdb_id = id;
+        else delete clean.tmdb_id;
+    }
+    return clean;
+}
+
+/**
+ * Checks a whole backup without touching the database.
+ *
+ * @param {object} data Parsed backup file.
+ * @returns {{users: object[], albums: object[], logs: object[], settings: object}}
+ * @throws {Error} With status 400 if the backup cannot be restored completely.
+ */
+function prepareRestore(data) {
+    if (!data || !Array.isArray(data.users)) {
+        throw restoreError('Backup file missing required fields', 400);
+    }
+    for (const key of ['albums', 'logs']) {
+        if (data[key] !== undefined && !Array.isArray(data[key])) {
+            throw restoreError('Backup file missing required fields', 400);
+        }
+    }
+    // Without an admin nobody could log in afterwards, and the items would
+    // belong to an account that no longer exists.
+    if (!data.users.some((user) => user && user.isAdmin === true)) {
+        throw restoreError('Backup file contains no admin account', 400);
     }
 
+    const albums = (data.albums || []).map(normalizeItem);
+    const settings = data.settings || {};
+
+    data.users.forEach((user) => assertValid(User, user, 'users'));
+    albums.forEach((album) => assertValid(Item, album, 'albums'));
+    assertValid(Settings, settings, 'settings');
+
+    // A damaged log entry is no reason to refuse the collection.
+    const logs = (data.logs || []).filter((log) => !findInvalid(LoginLog, log));
+    const skipped = (data.logs || []).length - logs.length;
+    if (skipped > 0) console.warn(`[Backup] Restore skips ${skipped} invalid log entries`);
+
+    return { users: data.users, albums, logs, settings };
+}
+
+async function wipeData() {
     await Promise.all([
         LoginLog.deleteMany({}),
         Item.deleteMany({}),
         User.deleteMany({}),
         Settings.deleteMany({})
     ]);
+}
 
-    if (data.users && data.users.length > 0) await User.insertMany(data.users);
+/**
+ * Puts a snapshot from buildBackupData() back unchanged. Uses the raw driver,
+ * so Mongoose cannot drop or reject anything that was already in the database.
+ */
+async function putBack(snapshot) {
+    await wipeData();
+    if (snapshot.users.length > 0) await User.collection.insertMany(snapshot.users);
+    if (snapshot.albums.length > 0) await Item.collection.insertMany(snapshot.albums);
+    if (snapshot.logs.length > 0) await LoginLog.collection.insertMany(snapshot.logs);
+    if (snapshot.settings) await Settings.collection.insertOne(snapshot.settings);
+}
 
-    if (data.albums && data.albums.length > 0) {
-        const cleanAlbums = data.albums.map(a => a.kind ? a : { ...a, kind: 'Music' });
-        await Item.insertMany(cleanAlbums);
+/**
+ * Replaces all data with a backup. The current data survives any failure: it
+ * is written to a safety copy first and put back if the restore fails midway.
+ *
+ * @param {object} data Parsed backup file.
+ * @returns {Promise<string|null>} Name of the safety copy, null if there was no data to keep.
+ * @throws {Error} With `status` set and a message that is safe to show.
+ */
+async function restoreFromData(data) {
+    const prepared = prepareRestore(data);
+    const previous = await buildBackupData();
+
+    let safetyCopy = null;
+    if (previous.users.length > 0 || previous.albums.length > 0) {
+        try {
+            safetyCopy = writeBackupFile(previous, SAFETY_PREFIX);
+        } catch (err) {
+            console.error('[Backup] Safety copy failed:', err);
+            throw restoreError('Could not write a safety copy. Nothing was changed.', 500);
+        }
     }
 
-    if (data.logs && data.logs.length > 0) await LoginLog.insertMany(data.logs);
+    try {
+        await wipeData();
+        await User.insertMany(prepared.users);
+        if (prepared.albums.length > 0) await Item.insertMany(prepared.albums);
+        if (prepared.logs.length > 0) await LoginLog.insertMany(prepared.logs);
+        await Settings.create(prepared.settings);
+    } catch (err) {
+        console.error('[Backup] Restore failed:', err);
+        try {
+            await putBack(previous);
+        } catch (putBackErr) {
+            console.error('[Backup] Could not put the previous data back:', putBackErr);
+            throw restoreError(`Restore failed and the previous data could not be put back. Your data is in the safety copy ${safetyCopy}.`, 500);
+        }
+        throw restoreError('Restore failed. The previous data was put back.', 500);
+    }
 
-    if (data.settings) await Settings.create(data.settings);
-    else await Settings.create({});
+    pruneSafetyCopies();
+    return safetyCopy;
+}
+
+function writeBackupFile(data, prefix) {
+    ensureDir();
+    const stamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+    const fileName = `${prefix}${stamp}.json`;
+    fs.writeFileSync(path.join(BACKUP_DIR, fileName), JSON.stringify(data, null, 2));
+    return fileName;
 }
 
 async function createBackup() {
-    ensureDir();
-    const data = await buildBackupData();
-    const stamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
-    const fileName = `vhsranger_backup_${stamp}.json`;
-    fs.writeFileSync(path.join(BACKUP_DIR, fileName), JSON.stringify(data, null, 2));
-    return fileName;
+    return writeBackupFile(await buildBackupData(), BACKUP_PREFIX);
+}
+
+function removeFiles(files) {
+    for (const f of files) {
+        try { fs.unlinkSync(path.join(BACKUP_DIR, f.name)); } catch (e) { /* already gone */ }
+    }
+}
+
+function pruneSafetyCopies() {
+    const copies = listBackups().filter((f) => f.name.startsWith(SAFETY_PREFIX));
+    removeFiles(copies.slice(SAFETY_COPIES_KEPT));
 }
 
 function listBackups() {
@@ -94,10 +228,8 @@ function deleteBackup(fileName) {
 }
 
 async function pruneOldBackups(retention) {
-    const excess = listBackups().slice(Math.max(1, retention));
-    for (const f of excess) {
-        try { fs.unlinkSync(path.join(BACKUP_DIR, f.name)); } catch (e) { /* already gone */ }
-    }
+    const backups = listBackups().filter((f) => f.name.startsWith(BACKUP_PREFIX));
+    removeFiles(backups.slice(Math.max(1, retention)));
 }
 
 // Checked once a minute. Fires when the clock hits the configured time-of-day

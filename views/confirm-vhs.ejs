@@ -276,7 +276,7 @@
                     <input type="hidden" name="imdb_id" value="<%= tape.imdb_id %>">
                     <input type="hidden" name="backdrop_image" value="<%= tape.backdrop_image %>">
                     <input type="hidden" name="trailer_key" value="<%= tape.trailer_key %>">
-                    <input type="hidden" name="cast_json" value='<%- JSON.stringify(tape.cast || []) %>'>
+                    <input type="hidden" name="cast_json" value="<%= JSON.stringify(tape.cast || []) %>">
                     <input type="hidden" name="country" value="<%= tape.country %>">
                     <input type="hidden" name="format_type" value="VHS">
 

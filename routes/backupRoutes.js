@@ -64,7 +64,7 @@ router.post('/import', async (req, res) => {
         res.status(200).json({ success: true, message: "Import successful" });
     } catch (err) {
         console.error("[ERR] Import :", err);
-        res.status(err.message === 'Backup file missing required fields' ? 400 : 500).json({ error: err.message });
+        res.status(err.status || 500).json({ error: err.status ? err.message : 'Import failed' });
     }
 });
 
@@ -107,7 +107,7 @@ router.post('/backups/:filename/restore', requireAuth, requireAdmin, async (req,
         res.cookie('jwt', '', { maxAge: 1 });
         res.json({ success: true });
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        res.status(err.status || 400).json({ error: err.message });
     }
 });
 
