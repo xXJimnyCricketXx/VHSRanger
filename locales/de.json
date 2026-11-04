@@ -57,6 +57,7 @@
     "currency_gbp": "Britisches Pfund (£)"
   },
   "errors": {
+    "bad_request": "Ungültige Anfrage.",
     "username_taken": "Dieser Benutzername ist bereits vergeben.",
     "current_password_incorrect": "Das aktuelle Passwort ist falsch.",
     "invalid_theme": "Ungültiges Thema.",
@@ -151,6 +152,7 @@
     "manual_desc": "Trage alle Felder selbst ein. Die TMDb-ID kannst du später ergänzen."
   },
   "admin": {
+    "login_failed": "Fehlgeschlagen",
     "title": "Verwaltung",
     "visibility": {
       "title": "Sichtbarkeitseinstellungen",

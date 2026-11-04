@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const { isIP } = require("validator");
 const User = require("../models/User");
 const BlockedIP = require("../models/blockedIP");
 const LoginLog = require("../models/LoginLog");
@@ -12,6 +14,7 @@ const https = require("https");
 const Item = require("../models/Item");
 const { listBackups } = require("../utils/backupScheduler");
 const { TMDB_LANG_MAP } = require("../config/constants");
+const { normalizeIp } = require("../utils/clientIp");
 
 /**
  * routes/adminRoutes.js
@@ -29,7 +32,7 @@ const createPassword = (length = 12) => {
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
   let password = "";
   for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
+    password += chars.charAt(crypto.randomInt(chars.length));
   }
   return password;
 };
@@ -125,20 +128,13 @@ router.post("/add-user", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { username, email } = req.body;
     const password = createPassword();
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user then force-update the stored password hash.
-    const newUser = await User.create({
+    await User.createWithPassword({
       username,
       email,
-      password: password,
+      password,
       lastChange: new Date(),
     });
-
-    await User.updateOne(
-      { _id: newUser._id },
-      { $set: { password: hashedPassword } },
-    );
 
     // Reload admin data (including logs) for the rendered view.
     const data = await loadAdminData();
@@ -206,7 +202,8 @@ router.post("/delete-user", requireAuth, requireAdmin, async (req, res) => {
 
 router.post("/block-ip", requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { ipAddress } = req.body;
+    const ipAddress = normalizeIp(req.body.ipAddress);
+    if (!isIP(ipAddress)) return res.redirect("/admin?msg=error");
     const exists = await BlockedIP.findOne({ ip: ipAddress });
     if (!exists) await BlockedIP.create({ ip: ipAddress });
     res.redirect("/admin?msg=ip_blocked");

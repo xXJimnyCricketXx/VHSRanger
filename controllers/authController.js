@@ -9,36 +9,60 @@ const User = require("../models/User");
 const jwt = require('jsonwebtoken');
 const LoginLog = require("../models/LoginLog");
 const geoip = require('geoip-lite');
-const requestIp = require('request-ip');
+const { getClientIp } = require('../utils/clientIp');
 
-// In-memory login attempt tracking to throttle brute-force attempts.
-const loginAttempts = {};
-const MAX_ATTEMPTS = 4;
-const BLOCK_TIME = 5 * 60 * 1000; // 5 minutes (can be adjusted as needed)
+const MAX_ATTEMPTS = 4; // per client and account
+const MAX_IP_ATTEMPTS = 20; // per client across all accounts
+const BLOCK_TIME = 5 * 60 * 1000; // 5 minutes
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 200;
+
+// In-memory attempt tracking. Failures count per client, so a stranger who
+// knows an email address cannot lock the real owner out of the account.
+const attempts = new Map();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of attempts) {
+    if (now - entry.lastTry > BLOCK_TIME && !(entry.blockedUntil > now)) attempts.delete(key);
+  }
+}, BLOCK_TIME).unref();
 
 /**
- * Translate known errors into i18n keys returned to the client.
- * This function handles both manual logic errors and Mongoose validation errors.
- * @param {Error} err - Error thrown by model operations
- * @returns {{login: string}} Object containing the i18n key for the error
+ * @returns {number} Milliseconds until the key is unblocked, 0 if it is not blocked.
  */
-const handleErrors = (err) => {
-  let errors = { login: '' };
+const blockedFor = (key, now) => {
+  const entry = attempts.get(key);
+  if (!entry) return 0;
+  if (entry.blockedUntil && now < entry.blockedUntil) return entry.blockedUntil - now;
+  if (entry.blockedUntil || now - entry.lastTry > BLOCK_TIME) attempts.delete(key);
+  return 0;
+};
 
-  // Manual check for login logic (custom errors thrown by User.login static method)
-  if (err.message === 'incorrect email' || err.message === 'incorrect password') {
-    errors.login = 'errors.invalid_credentials';
-  }
+/**
+ * @returns {boolean} Whether this failure blocked the key.
+ */
+const registerFailure = (key, max, now) => {
+  const entry = attempts.get(key) || { count: 0, lastTry: now };
+  entry.count++;
+  entry.lastTry = now;
+  if (entry.count >= max) entry.blockedUntil = now + BLOCK_TIME;
+  attempts.set(key, entry);
+  return entry.count >= max;
+};
 
-  // If the error is a validation error, we extract the key defined in the User Schema.
-  if (err.message.includes('user validation failed')) {
-    Object.values(err.errors).forEach(({ properties }) => {
-      // The properties.message contains the i18n key (e.g., "auth.email_required")
-      errors.login = properties.message;
-    });
-  }
-
-  return errors;
+const writeLoginLog = (req, ip, status, { user, username, email }) => {
+  const geo = geoip.lookup(ip) || {};
+  return LoginLog.create({
+    user,
+    username,
+    email,
+    ip,
+    country: geo.country || 'XX',
+    city: geo.city || req.t('common.unknown'),
+    userAgent: String(req.headers['user-agent'] || '').slice(0, 500),
+    status
+  });
 };
 
 /**
@@ -54,42 +78,40 @@ module.exports.login_get = (req, res) => {
  * Process login form submissions. Implements simple in-memory rate limiting
  * and logs each attempt (success or failure) with geolocation information.
  */
-module.exports.login_post = async (req, res) => {
-  const { email, password } = req.body;
-  const now = Date.now();
+module.exports.login_post = async (req, res, next) => {
+  const { email: rawEmail, password } = req.body;
 
-  // Check whether this email is temporarily blocked due to repeated failures.
-  if (loginAttempts[email] && loginAttempts[email].blockedUntil && now < loginAttempts[email].blockedUntil) {
-    const secondsLeft = Math.ceil((loginAttempts[email].blockedUntil - now) / 1000);
+  // Only plain strings reach the database, which also rules out query operators.
+  if (typeof rawEmail !== 'string' || typeof password !== 'string' ||
+      !rawEmail || !password ||
+      rawEmail.length > MAX_EMAIL_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
+    return res.status(400).json({ errors: { login: req.t('errors.invalid_credentials') } });
+  }
+
+  const email = rawEmail.trim().toLowerCase();
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const accountKey = `account:${ip}|${email}`;
+  const ipKey = `ip:${ip}`;
+
+  const waitMs = Math.max(blockedFor(accountKey, now), blockedFor(ipKey, now));
+  if (waitMs > 0) {
     return res.status(429).json({
-      errors: { login: req.t('errors.too_many_attempts_timed', { seconds: secondsLeft }) }
+      errors: { login: req.t('errors.too_many_attempts_timed', { seconds: Math.ceil(waitMs / 1000) }) }
     });
   }
 
   try {
     const user = await User.login(email, password);
 
-    const clientIp = requestIp.getClientIp(req);
-    const geo = geoip.lookup(clientIp) || {};
+    await writeLoginLog(req, ip, 'success', { user: user._id, username: user.username, email: user.email });
 
-    await LoginLog.create({
-      user: user._id,
-      username: user.username,
-      email: user.email,
-      ip: clientIp,
-      country: geo.country || 'XX',
-      city: geo.city || req.t('common.unknown'),
-      userAgent: req.headers['user-agent'],
-      status: 'success'
-    });
-
-    // Clear failed attempts on successful login.
-    if (loginAttempts[email]) delete loginAttempts[email];
+    attempts.delete(accountKey);
 
     const token = jwt.sign({ id: user._id }, process.env.PASSJWT, { expiresIn: '3d' });
 
-    res.cookie('jwt', token, { 
-        httpOnly: true, 
+    res.cookie('jwt', token, {
+        httpOnly: true,
         maxAge: 3 * 24 * 60 * 60 * 1000,
         secure: process.env.PROD === 'true', // Only send cookie over HTTPS in production
         sameSite: 'lax' // Mitigate CSRF
@@ -97,25 +119,22 @@ module.exports.login_post = async (req, res) => {
     res.status(200).json({ user: user._id });
 
   } catch (err) {
-    // Increment failure counter for this email address.
-    if (!loginAttempts[email]) loginAttempts[email] = { count: 0, lastTry: now };
-    loginAttempts[email].count++;
-    loginAttempts[email].lastTry = now;
+    if (err.message !== 'incorrect email' && err.message !== 'incorrect password') {
+      return next(err);
+    }
 
-    // If threshold reached, set a temporary block window.
-    if (loginAttempts[email].count >= MAX_ATTEMPTS) {
-      loginAttempts[email].blockedUntil = now + BLOCK_TIME;
+    await writeLoginLog(req, ip, 'failed', { email }).catch(console.error);
+
+    const accountBlocked = registerFailure(accountKey, MAX_ATTEMPTS, now);
+    const ipBlocked = registerFailure(ipKey, MAX_IP_ATTEMPTS, now);
+    if (accountBlocked || ipBlocked) {
       return res.status(429).json({
         errors: { login: req.t('errors.too_many_attempts_blocked') }
       });
     }
 
-    // Retrieve the error key from handleErrors.
-    const errorKeys = handleErrors(err);
-    
-    // Translate the key returned by the model using the current request language.
     res.status(400).json({
-      errors: { login: req.t(errorKeys.login) }
+      errors: { login: req.t('errors.invalid_credentials') }
     });
   }
 };

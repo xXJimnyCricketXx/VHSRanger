@@ -77,6 +77,20 @@ userSchema.statics.login = async function (email, password) {
     throw Error('incorrect email');
 };
 
+/**
+ * Create a user with a hashed password. The plain password is validated in
+ * memory and never reaches the database.
+ *
+ * @param {object} data - User fields including the plain `password`
+ * @returns {Promise<mongoose.Document>} The saved user
+ */
+userSchema.statics.createWithPassword = async function (data) {
+    const user = new this(data);
+    await user.validate();
+    user.password = await bcrypt.hash(user.password, 10);
+    return user.save({ validateBeforeSave: false });
+};
+
 const User = mongoose.model('user', userSchema);
 
 module.exports = User;

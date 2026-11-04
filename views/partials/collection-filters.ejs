@@ -45,7 +45,7 @@
                         <label class="flex items-center gap-3 p-2 text-sm rounded-lg hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors group">
                             <input type="radio" name="locationRadio"
                                 class="accent-primary-theme w-4 h-4 rounded border-gray-300 transition-all cursor-pointer flex-shrink-0"
-                                <%= locals.queryLocation === loc ? 'checked' : '' %> onchange="selectLocation('<%= loc %>')">
+                                <%= locals.queryLocation === loc ? 'checked' : '' %> onchange="selectLocation(<%= JSON.stringify(loc) %>)">
                             <span class="min-w-0 break-words group-hover:translate-x-0.5 transition-transform"><%= loc %></span>
                         </label>
                     <% }) %>

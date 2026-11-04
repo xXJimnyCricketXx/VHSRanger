@@ -2,79 +2,70 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 /**
+ * Resolve the user behind a login cookie. Returns null if the token is missing,
+ * invalid, belongs to a deleted user or was issued before the last password
+ * change. Every auth check goes through here, so they all treat a token alike.
+ *
+ * @param {string|undefined} token
+ * @returns {Promise<import('mongoose').Document|null>}
+ */
+const resolveUser = async (token) => {
+  if (!token) return null;
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.PASSJWT);
+  } catch (err) {
+    return null;
+  }
+
+  const user = await User.findById(decoded.id);
+  if (!user) return null;
+  if (user.lastChange && decoded.iat * 1000 < user.lastChange.getTime()) return null;
+  return user;
+};
+
+/**
  * Middleware: requireAuth
- * Verifies a JWT from the request cookies and attaches the corresponding
- * user document to `req.user`. If the token is invalid or the user no
- * longer exists (or changed password), the middleware clears the cookie
- * and redirects to the login page.
+ * Attaches the logged-in user to `req.user`, or clears the cookie and redirects
+ * to the login page.
  *
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
  */
 const requireAuth = async (req, res, next) => {
-  const token = req.cookies.jwt;
-
-  if (token) {
-    jwt.verify(token, process.env.PASSJWT, async (err, decodedToken) => {
-      if (err) {
-        console.log(err.message);
-        return res.redirect('/login');
-      } else {
-        // Retrieve the user and attach it to req.user
-        const user = await User.findById(decodedToken.id);
-        if (!user || (user && user.lastChange && decodedToken.iat * 1000 < user.lastChange.getTime())) {
-          if (res.cookie('jwt')) res.cookie('jwt', '', { maxAge: 1 });
-          return res.redirect('/login');
-        }
-        req.user = user; // Attach the user to req.user
-        next();
-      }
-    });
-  } else {
-    res.redirect('/login');
+  try {
+    const user = await resolveUser(req.cookies.jwt);
+    if (!user) {
+      if (req.cookies.jwt) res.clearCookie('jwt');
+      return res.redirect('/login');
+    }
+    req.user = user;
+    next();
+  } catch (err) {
+    next(err);
   }
 };
 
 /**
  * Middleware: checkUser
- * Populates `res.locals.user` and `res.locals.isAdmin` for templates.
- * If no valid token is present, `res.locals.user` is null.
+ * Populates `req.user`, `res.locals.user` and `res.locals.isAdmin` for routes
+ * and templates. All of them stay empty without a valid token.
  *
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
  */
-const checkUser = (req, res, next) => {
-
-  const token = req.cookies.jwt;
-
-  res.locals.user = null;
-  res.locals.isAdmin = false;
-  req.user = null;
-
-  if (token) {
-    jwt.verify(token, process.env.PASSJWT, async (err, decodedToken) => {
-      if (err) {
-        res.locals.user = null;
-        req.user = null;
-        next();
-      } else {
-        let user = await User.findById(decodedToken.id);
-        res.locals.user = user;
-        req.user = user;
-
-        if (user && user.isAdmin === true) {
-            res.locals.isAdmin = true;
-        }
-
-        next();
-      }
-    });
-  } else {
-    res.locals.user = null;
-    req.user = null;
+const checkUser = async (req, res, next) => {
+  try {
+    const user = await resolveUser(req.cookies.jwt);
+    req.user = user;
+    res.locals.user = user;
+    res.locals.isAdmin = !!(user && user.isAdmin === true);
     next();
+  } catch (err) {
+    next(err);
   }
 };
 

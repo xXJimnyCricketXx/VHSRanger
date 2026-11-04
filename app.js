@@ -24,6 +24,7 @@ const i18nMiddleware = require('i18next-http-middleware');
 const settingsMiddleware = require('./middleware/settingsMiddleware');
 const themesConfig = require('./config/themes');
 const { BASE_URL } = require('./config/constants');
+const { getClientIp } = require('./utils/clientIp');
 
 // Models
 const User = require('./models/User.js');
@@ -69,9 +70,26 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('io', io); // Expose io to routes
 
 // Global middlewares
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'SAMEORIGIN');
+  res.set('Referrer-Policy', 'same-origin');
+  next();
+});
+// Uploads are avatars only. Anything else in that folder is not served.
+app.use(BASE_URL + '/uploads', (req, res, next) => {
+  if (/\.(jpe?g|png|gif|webp)$/i.test(req.path)) return next();
+  res.status(404).end();
+});
 app.use(BASE_URL, express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Express 5 leaves req.body undefined when a request has no parsable body.
+app.use((req, res, next) => {
+  if (req.body === undefined) req.body = {};
+  next();
+});
 app.use(cookieParser());
 
 
@@ -119,6 +137,8 @@ app.use(async (req, res, next) => {
   res.locals.currentLng = req.language;
   res.locals.appVersion = pkg.version;
   res.locals.baseUrl = BASE_URL;
+  // JSON for inline <script> blocks: data cannot close the script tag.
+  res.locals.scriptJson = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
   res.locals.currentPath = req.path;
   req.io = io;
   next();
@@ -133,9 +153,10 @@ app.use((req, res, next) => {
 
 // Security: IP blocking middleware
 app.use(async (req, res, next) => {
-  const clientIP = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  const clientIP = getClientIp(req);
   try {
-    const blocked = await BlockedIP.findOne({ ip: clientIP });
+    // Older entries may still carry the "::ffff:" prefix.
+    const blocked = await BlockedIP.findOne({ ip: { $in: [clientIP, '::ffff:' + clientIP] } });
     if (blocked) return res.status(403).send(req.t('common.forbidden'));
     next();
   } catch (err) {
@@ -150,8 +171,8 @@ app.use(settingsMiddleware);
 // Installation gatekeeper middleware
 app.use(async (req, res, next) => {
     // Ignore paths that should not be redirected during setup
-    if (req.path.startsWith(BASE_URL + '/setup') || 
-      req.path.startsWith(BASE_URL + '/ressources') || 
+    if (req.path.startsWith(BASE_URL + '/setup') ||
+      req.path.startsWith(BASE_URL + '/ressources') ||
       req.path.startsWith(BASE_URL + '/styles') ||
       req.path.startsWith(BASE_URL + '/login') ||
       req.path.startsWith(BASE_URL + '/backup') ) { // allow login and backup import while setting up
@@ -166,12 +187,12 @@ app.use(async (req, res, next) => {
     } catch (e) {
         console.error("Check setup error:", e);
     }
-    
+
     next();
 });
 
 app.use((req, res, next) => {
-    res.locals.allThemes = themesConfig; 
+    res.locals.allThemes = themesConfig;
     next();
 });
 
@@ -200,6 +221,23 @@ app.use(BASE_URL + '/backup', backupRoutes);
 
 app.use((req, res) => {
     res.status(404).render('404');
+});
+
+// Without this handler Express prints stack traces and server paths to the client.
+app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err);
+
+    const candidate = err.status || err.statusCode;
+    const status = candidate >= 400 && candidate < 600 ? candidate : 500;
+    if (status >= 500) console.error(err);
+
+    // Body parser errors happen before the i18n middleware has run.
+    const translate = req.t || i18next.getFixedT('en');
+    const message = translate(status >= 500 ? 'errors.generic_server_error' : 'errors.bad_request');
+    if (req.is('json') || req.accepts(['html', 'json']) === 'json') {
+        return res.status(status).json({ error: message });
+    }
+    res.status(status).type('text/plain').send(message);
 });
 
 const connectDB = require('./config/db.js');

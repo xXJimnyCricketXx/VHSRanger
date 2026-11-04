@@ -81,7 +81,7 @@
                                         </td>
                                         <td class="px-6 py-4 text-right flex justify-end gap-2">
                                             <form action="<%= baseUrl %>/admin/reset-password" method="POST"
-                                                onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_reset', { name: u.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                data-confirm="<%= t('admin.confirm_reset', { name: u.username, interpolation: { escapeValue: false } }) %>">
                                                 <input type="hidden" name="userId" value="<%= u._id %>">
                                                 <button type="submit"
                                                     class="text-yellow-600 bg-yellow-100 dark:bg-yellow-500/10 p-2 rounded-lg transition-colors hover:brightness-110"
@@ -91,7 +91,7 @@
                                             </form>
                                             <% if (u._id.toString() !==user._id.toString()) { %>
                                                 <form action="<%= baseUrl %>/admin/delete-user" method="POST"
-                                                    onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_delete_user', { name: u.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                    data-confirm="<%= t('admin.confirm_delete_user', { name: u.username, interpolation: { escapeValue: false } }) %>">
                                                     <input type="hidden" name="userId" value="<%= u._id %>">
                                                     <button type="submit"
                                                         class="text-red-600 bg-red-100 dark:bg-red-500/10 p-2 rounded-lg transition-colors hover:brightness-110"
@@ -135,7 +135,7 @@
                                     </div>
                                     <div class="flex gap-2">
                                         <form action="<%= baseUrl %>/admin/reset-password" method="POST"
-                                            onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_reset', { name: u.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                            data-confirm="<%= t('admin.confirm_reset', { name: u.username, interpolation: { escapeValue: false } }) %>">
                                             <input type="hidden" name="userId" value="<%= u._id %>">
                                             <button type="submit"
                                                 class="text-yellow-600 bg-yellow-50 dark:bg-yellow-500/10 px-4 py-2 rounded-xl border border-yellow-200 dark:border-yellow-500/20 text-sm font-bold">
@@ -144,7 +144,7 @@
                                         </form>
                                         <% if (u._id.toString() !==user._id.toString()) { %>
                                             <form action="<%= baseUrl %>/admin/delete-user" method="POST"
-                                                onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_delete_user', { name: u.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                data-confirm="<%= t('admin.confirm_delete_user', { name: u.username, interpolation: { escapeValue: false } }) %>">
                                                 <input type="hidden" name="userId" value="<%= u._id %>">
                                                 <button type="submit"
                                                     class="text-red-600 bg-red-50 dark:bg-red-500/10 px-4 py-2 rounded-xl border border-red-200 dark:border-red-500/20 text-sm font-bold">
@@ -452,7 +452,11 @@
                                         <tr class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors group">
                                             <td class="px-6 py-4">
                                                 <div class="font-bold">
-                                                    <%= log.username %>
+                                                    <% if (log.status === 'failed') { %>
+                                                        <span class="text-red-500"><%= t('admin.login_failed') %></span>
+                                                    <% } else { %>
+                                                        <%= log.username %>
+                                                    <% } %>
                                                 </div>
                                                 <div class="text-[10px] opacity-60 truncate">
                                                     <%= log.email %>
@@ -483,8 +487,9 @@
                                                 </div>
                                                 <div class="text-[10px] opacity-60 max-w-[120px] truncate"
                                                     title="<%= log.userAgent %>">
-                                                    <%= log.userAgent.includes('Windows') ? 'Windows' :
-                                                        (log.userAgent.includes('Mac') ? 'Mac' : 'Mobile/Linux' ) %>
+                                                    <% const agent = log.userAgent || ''; %>
+                                                    <%= agent.includes('Windows') ? 'Windows' :
+                                                        (agent.includes('Mac') ? 'Mac' : 'Mobile/Linux' ) %>
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 text-[10px] whitespace-nowrap">
@@ -499,7 +504,7 @@
                                                 <div class="flex justify-end gap-2 opacity-100 transition-opacity">
                                                     <% if (log.user) { %>
                                                         <form action="<%= baseUrl %>/admin/reset-password" method="POST"
-                                                            onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_reset', { name: log.username })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                            data-confirm="<%= t('admin.confirm_reset', { name: log.username, interpolation: { escapeValue: false } }) %>">
                                                             <input type="hidden" name="userId" value="<%= log.user %>">
                                                             <button type="submit"
                                                                 class="bg-black/5 dark:bg-white/5 hover:bg-yellow-500 hover:text-white p-2 rounded-xl border border-transparent transition-colors"
@@ -509,7 +514,7 @@
                                                         </form>
                                                         <% } %>
                                                             <form action="<%= baseUrl %>/admin/block-ip" method="POST"
-                                                                onsubmit="return confirm('<%- JSON.stringify(t('admin.confirm_block_ip', { ip: log.ip })).slice(1, -1).replace(/'/g, "\\'").replace(/"/g, '&quot;') %>')">
+                                                                data-confirm="<%= t('admin.confirm_block_ip', { ip: log.ip, interpolation: { escapeValue: false } }) %>">
                                                                 <input type="hidden" name="ipAddress"
                                                                     value="<%= log.ip %>">
                                                                 <button type="submit"
@@ -653,6 +658,12 @@
 
         <script src="<%= baseUrl %>/socket.io/socket.io.js"></script>
         <script>
+            // Confirmation texts contain user data, so they stay in a data attribute.
+            document.addEventListener('submit', function (e) {
+                const message = e.target.dataset && e.target.dataset.confirm;
+                if (message && !confirm(message)) e.preventDefault();
+            });
+
             function toggleModal(id) {
                 const modal = document.getElementById(id);
                 modal.classList.toggle('hidden');

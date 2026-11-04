@@ -57,6 +57,7 @@
     "currency_gbp": "British Pound (£)"
   },
   "errors": {
+    "bad_request": "Invalid request.",
     "username_taken": "This username is already taken.",
     "current_password_incorrect": "Current password is incorrect.",
     "invalid_theme": "Invalid theme.",
@@ -151,6 +152,7 @@
     "manual_desc": "Fill in all the fields yourself. You can add the TMDb ID later."
   },
   "admin": {
+    "login_failed": "Failed",
     "title": "Administration",
     "visibility": {
       "title": "Visibility Settings",

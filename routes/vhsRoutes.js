@@ -205,6 +205,12 @@ function dedupeFilms(items) {
     return result;
 }
 
+// A query limited to what the current user may see (see applyVisibilityFilter).
+function visibleQuery(res, query) {
+    applyVisibilityFilter(query, res.locals.isAdmin, res.locals.settings);
+    return query;
+}
+
 async function getAdminId() {
     const admin = await User.findOne({ isAdmin: true }).select('_id');
     return admin ? admin._id : null;
@@ -322,7 +328,7 @@ router.get('/', requireAuth, async (req, res) => {
 router.get('/stats', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const allItems = await Item.find({ owner: adminId, in_wishlist: false }).lean();
+        const allItems = await Item.find(visibleQuery(res, { owner: adminId, in_wishlist: false })).lean();
 
         const totalTapes = countPhysicalCassettes(allItems);
         const totalFilms = countTotalFilms(allItems);
@@ -490,11 +496,11 @@ router.get('/collection', requireAuth, async (req, res) => {
             queryFilterMode: filterMode,
             currentSort: sort,
 
-            locations: await Item.distinct('location', { owner: adminId, kind: 'VHS' }),
+            locations: await Item.distinct('location', visibleQuery(res, { owner: adminId, kind: 'VHS' })),
             genres: await (async () => {
                 const [gBase, gArray] = await Promise.all([
-                    Item.distinct('genre', { owner: adminId, kind: 'VHS', genre: { $nin: ['', null] } }),
-                    Item.distinct('genres', { owner: adminId, kind: 'VHS' })
+                    Item.distinct('genre', visibleQuery(res, { owner: adminId, kind: 'VHS', genre: { $nin: ['', null] } })),
+                    Item.distinct('genres', visibleQuery(res, { owner: adminId, kind: 'VHS' }))
                 ]);
                 return [...new Set([...gBase, ...gArray])].filter(Boolean).sort();
             })()
@@ -526,7 +532,7 @@ router.get('/add-vhs/manual', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // route for editing an existing tape
-router.get('/vhs/edit/:id', requireAuth, async (req, res) => {
+router.get('/vhs/edit/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const tape = await Item.findById(req.params.id);
         if (!tape) {
@@ -600,7 +606,7 @@ router.post('/search-tmdb', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // Confirmation page with full TMDb details (credits, cast, certification)
-router.get('/confirm-vhs/:id', requireAuth, async (req, res) => {
+router.get('/confirm-vhs/:id', requireAuth, requireAdmin, async (req, res) => {
     const tmdbId = req.params.id;
     const key = tmdbKey();
     const language = tmdbLang(res.locals.currentLng);
@@ -746,7 +752,7 @@ router.post('/api/vhs/:id/move-to-collection', requireAuth, requireAdmin, async 
 });
 
 // Duplicate check
-router.get('/api/check-duplicate', requireAuth, async (req, res) => {
+router.get('/api/check-duplicate', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { title, director, excludeId, cassette_number } = req.query;
         if (!title) return res.json({ duplicate: false });
@@ -782,7 +788,7 @@ router.get('/api/check-duplicate', requireAuth, async (req, res) => {
 // This is intentionally allowed (several films can share one physical tape),
 // but two independently-numbered collections can also collide by coincidence -
 // the frontend asks the user which case it is before saving.
-router.get('/api/check-cassette-number', requireAuth, async (req, res) => {
+router.get('/api/check-cassette-number', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { cassette_number, excludeId } = req.query;
         const val = (cassette_number || '').trim();
@@ -882,7 +888,7 @@ router.post('/api/vhs/:id/estimate-price', requireAuth, requireAdmin, async (req
 router.get('/print/collection', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const items = await Item.find({ owner: adminId, in_wishlist: false, kind: 'VHS' })
+        const items = await Item.find(visibleQuery(res, { owner: adminId, in_wishlist: false, kind: 'VHS' }))
             .sort({ title: 1 })
             .lean();
         res.render('print', {
@@ -898,7 +904,7 @@ router.get('/print/collection', requireAuth, async (req, res) => {
 router.get('/print/wishlist', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const items = await Item.find({ owner: adminId, in_wishlist: true, kind: 'VHS' })
+        const items = await Item.find(visibleQuery(res, { owner: adminId, in_wishlist: true, kind: 'VHS' }))
             .sort({ title: 1 })
             .lean();
         res.render('print', {
@@ -991,11 +997,11 @@ router.get('/wishlist', requireAuth, async (req, res) => {
             queryFilterMode: filterMode,
             currentSort: sort,
 
-            locations: await Item.distinct('location', { owner: adminId, kind: 'VHS', in_wishlist: true }),
+            locations: await Item.distinct('location', visibleQuery(res, { owner: adminId, kind: 'VHS', in_wishlist: true })),
             genres: await (async () => {
                 const [gBase, gArray] = await Promise.all([
-                    Item.distinct('genre', { owner: adminId, kind: 'VHS', in_wishlist: true, genre: { $nin: ['', null] } }),
-                    Item.distinct('genres', { owner: adminId, kind: 'VHS', in_wishlist: true })
+                    Item.distinct('genre', visibleQuery(res, { owner: adminId, kind: 'VHS', in_wishlist: true, genre: { $nin: ['', null] } })),
+                    Item.distinct('genres', visibleQuery(res, { owner: adminId, kind: 'VHS', in_wishlist: true }))
                 ]);
                 return [...new Set([...gBase, ...gArray])].filter(Boolean).sort();
             })()
@@ -1009,7 +1015,7 @@ router.get('/wishlist', requireAuth, async (req, res) => {
 // collection item detail
 router.get('/vhs/:id', requireAuth, async (req, res) => {
     try {
-        const tape = await Item.findById(req.params.id);
+        const tape = await Item.findOne(visibleQuery(res, { _id: req.params.id }));
         if (!tape) return res.redirect('/collection');
         const tapeFormatted = formatForView(tape);
         const ebayEnabled = !!(process.env.EBAY_APP_ID && process.env.EBAY_CERT_ID);

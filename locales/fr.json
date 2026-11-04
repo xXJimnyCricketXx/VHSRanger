@@ -57,6 +57,7 @@
     "currency_gbp": "Livre sterling (£)"
   },
   "errors": {
+    "bad_request": "Requête invalide.",
     "username_taken": "Ce pseudo est déjà utilisé.",
     "current_password_incorrect": "Le mot de passe actuel est incorrect.",
     "invalid_theme": "Thème invalide.",
@@ -151,6 +152,7 @@
     "manual_desc": "Remplissez vous-même tous les champs. Vous pourrez ajouter l'ID TMDb plus tard."
   },
   "admin": {
+    "login_failed": "Échec",
     "title": "Administration",
     "visibility": {
       "title": "Paramètres de visibilité",

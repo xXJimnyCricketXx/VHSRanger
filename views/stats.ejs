@@ -215,11 +215,11 @@
         x: { grid: { display: false }, ticks: { color: tickColor } }
     };
 
-    const genreLabels = <%- JSON.stringify(genres.map(g => g[0])) %>;
+    const genreLabels = <%- scriptJson(genres.map(g => g[0])) %>;
     const genreValues = <%- JSON.stringify(genres.map(g => g[1])) %>;
     const yearLabels  = <%- JSON.stringify(years.map(y => y[0])) %>;
     const yearValues  = <%- JSON.stringify(years.map(y => y[1])) %>;
-    const condLabels  = <%- JSON.stringify(conditions.map(c => t('vhs.condition.' + c[0]) || c[0])) %>;
+    const condLabels  = <%- scriptJson(conditions.map(c => t('vhs.condition.' + c[0]) || c[0])) %>;
     const condValues  = <%- JSON.stringify(conditions.map(c => c[1])) %>;
 
     // Genre bar chart

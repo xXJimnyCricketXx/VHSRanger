@@ -7,12 +7,41 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { requireAuth } = require('../middleware/authMiddleware');
 
+const MAX_USERNAME_LENGTH = 50;
+const MIN_PASSWORD_LENGTH = 6;
+const MAX_PASSWORD_LENGTH = 200;
+
 /**
  * routes/settingsRoutes.js
  *
  * User settings routes: avatar upload, username/theme/language updates
  * and password changes. Uses Multer for avatar uploads with local storage.
  */
+
+const IMAGE_TYPES = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/gif': '.gif',
+    'image/webp': '.webp'
+};
+
+// The browser declares the MIME type, so check the file's first bytes as well.
+function hasImageSignature(filePath, mimetype) {
+    const head = Buffer.alloc(12);
+    const fd = fs.openSync(filePath, 'r');
+    try {
+        fs.readSync(fd, head, 0, 12, 0);
+    } finally {
+        fs.closeSync(fd);
+    }
+    switch (mimetype) {
+        case 'image/jpeg': return head[0] === 0xFF && head[1] === 0xD8 && head[2] === 0xFF;
+        case 'image/png': return head.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]));
+        case 'image/gif': return ['GIF87a', 'GIF89a'].includes(head.toString('latin1', 0, 6));
+        case 'image/webp': return head.toString('latin1', 0, 4) === 'RIFF' && head.toString('latin1', 8, 12) === 'WEBP';
+        default: return false;
+    }
+}
 
 // Multer configuration (image uploads)
 const storage = multer.diskStorage({
@@ -22,8 +51,9 @@ const storage = multer.diskStorage({
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-        // Keep a timestamp to avoid browser cache and include user ID for clarity
-        const ext = path.extname(file.originalname);
+        // Keep a timestamp to avoid browser cache and include user ID for clarity.
+        // The extension comes from the checked type, never from the uploaded name.
+        const ext = IMAGE_TYPES[file.mimetype];
         const userId = req.user ? req.user._id : 'unknown'; // req.user is available via requireAuth
         cb(null, `avatar-${userId}-${Date.now()}${ext}`);
   }
@@ -34,13 +64,20 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (allowedTypes.includes(file.mimetype)) cb(null, true);
+        if (IMAGE_TYPES[file.mimetype]) cb(null, true);
         else cb(new Error('Format non supporté (JPG, PNG, GIF, WEBP uniquement).'));
     },
     limits: { fileSize: 5 * 1024 * 1024 },
 });
 
+
+// Reports upload errors (wrong type, too large) as JSON like the rest of the form.
+const uploadAvatar = (req, res, next) => {
+    upload.single('avatar')(req, res, (err) => {
+        if (err) return res.status(400).json({ success: false, message: req.t('messages.avatar_upload_error') });
+        next();
+    });
+};
 
 // Routes
 
@@ -70,7 +107,10 @@ router.post('/check-username', requireAuth, async (req, res) => {
 
 // Update username
 router.post('/update-username', requireAuth, async (req, res) => {
-    const { username } = req.body;
+    const username = typeof req.body.username === 'string' ? req.body.username.trim() : '';
+    if (!username || username.length > MAX_USERNAME_LENGTH) {
+        return res.status(400).json({ success: false, message: req.t('auth.username_required') });
+    }
     try {
         const userExists = await User.findOne({ username: username });
         if (userExists && userExists._id.toString() !== res.locals.user._id.toString()) {
@@ -84,11 +124,16 @@ router.post('/update-username', requireAuth, async (req, res) => {
 });
 
 // Upload avatar
-router.post('/upload-avatar', requireAuth, upload.single('avatar'), async (req, res) => {
+router.post('/upload-avatar', requireAuth, uploadAvatar, async (req, res) => {
     // Multer error handling
     if (!req.file) return res.status(400).json({ success: false, message: req.t('messages.avatar_upload_error') });
 
     try {
+        if (!hasImageSignature(req.file.path, req.file.mimetype)) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ success: false, message: req.t('messages.avatar_upload_error') });
+        }
+
         const userId = res.locals.user._id;
 
         // Retrieve previous avatar to remove it from disk
@@ -120,21 +165,25 @@ router.post('/upload-avatar', requireAuth, upload.single('avatar'), async (req, 
 // Update Password
 router.post('/update-password', requireAuth, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string' ||
+        newPassword.length < MIN_PASSWORD_LENGTH || newPassword.length > MAX_PASSWORD_LENGTH) {
+        return res.status(400).json({ success: false, message: req.t('auth.password_too_short') });
+    }
     try {
         // Verify current password
         const user = await User.findById(res.locals.user._id);
-        
+
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) {
             return res.status(400).json({ success: false, message: req.t('errors.current_password_incorrect') });
         }
-        
+
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await User.findByIdAndUpdate(res.locals.user._id, { 
-            password: hashedPassword, 
-            lastChange: Date.now() 
+        await User.findByIdAndUpdate(res.locals.user._id, {
+            password: hashedPassword,
+            lastChange: Date.now()
         });
-        
+
         res.json({ success: true, message: req.t('messages.password_updated') });
     } catch (error) {
         console.error(error);
@@ -145,7 +194,7 @@ router.post('/update-password', requireAuth, async (req, res) => {
 // Update Theme
 router.post('/update-theme', requireAuth, async (req, res) => {
     const { theme } = req.body;
-    
+
     if (!['light', 'dark'].includes(theme)) {
         return res.status(400).json({ success: false, message: req.t('errors.invalid_theme') });
     }
@@ -163,6 +212,10 @@ router.post('/update-theme', requireAuth, async (req, res) => {
 router.post('/update-language', requireAuth, async (req, res) => {
   const { language } = req.body;
   const userId = res.locals.user._id;
+
+  if (!User.schema.path('language').enumValues.includes(language)) {
+    return res.status(400).send(req.t('errors.lang_change_error'));
+  }
 
   try {
     // Update language in DB

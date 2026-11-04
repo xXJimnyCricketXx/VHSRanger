@@ -57,6 +57,7 @@
     "currency_gbp": "Libra esterlina (£)"
   },
   "errors": {
+    "bad_request": "Solicitud no válida.",
     "username_taken": "Este nombre de usuario ya está en uso.",
     "current_password_incorrect": "La contraseña actual es incorrecta.",
     "invalid_theme": "Tema no válido.",
@@ -151,6 +152,7 @@
     "manual_desc": "Completa todos los campos tú mismo. Puedes añadir el ID de TMDb más tarde."
   },
   "admin": {
+    "login_failed": "Fallido",
     "title": "Administración",
     "visibility": {
       "title": "Configuración de visibilidad",
