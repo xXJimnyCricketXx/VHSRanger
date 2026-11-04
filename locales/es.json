@@ -521,6 +521,9 @@
     "dup_new": "No, añadir como entrada nueva",
     "dup_increment": "Cantidad +1",
     "passwords_match": "Las contraseñas coinciden",
-    "import_failed": "Error en la importación"
+    "import_failed": "Error en la importación",
+    "changelog": "Registro de cambios",
+    "changelog_current": "Versión actual",
+    "close": "Cerrar"
   }
 }

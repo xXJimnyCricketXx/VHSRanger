@@ -90,4 +90,4 @@ const requireAdmin = (req, res, next) => {
     }
 };
 
-module.exports = { requireAuth, checkUser, requireAdmin };
+module.exports = { requireAuth, checkUser, requireAdmin, resolveUser };

@@ -5,7 +5,7 @@ This guide will walk you through setting up **VHSRanger** on your local machine 
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed:
-* **Node.js** (v20.x or higher)
+* **Node.js** (v24.x)
 * **npm** or **yarn**
 * **MongoDB** (v6.x or higher)
 
@@ -33,7 +33,7 @@ cp .env.example .env
 
 > [!IMPORTANT]
 > Make sure to use `PROD=true` **ONLY WITH HTTP<u>S</u>**. For localhost or local IP access, leave `PROD` to `false`.
-> For the environment variables `PASSJWT` and `SESSION_SECRET`, make sure to use different complex passwords. They are essential for properly **encrypting** sessions.
+> Set `PASSJWT` to a long random secret, e.g. the output of `openssl rand -hex 32`. The app refuses to start with the example value.
 
 ### 4. Launch the Application
 

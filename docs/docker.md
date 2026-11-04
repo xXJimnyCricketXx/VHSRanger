@@ -27,7 +27,7 @@ services:
       - mongodb
 
   mongodb:
-    image: mongo:latest
+    image: mongo:8
     container_name: vhsranger_db
     restart: unless-stopped
     volumes:
@@ -51,7 +51,9 @@ services:
       - BASE_URL=
       - PROD=false
       - PASSJWT=<something>
-      - SESSION_SECRET=<something>
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
       - TMDB_API_KEY=<something>
       - EBAY_APP_ID=<something>
       - EBAY_CERT_ID=<something>
@@ -62,7 +64,7 @@ services:
       - /mnt/<backups_dataset>:/app/backups
 
   mongodb:
-    image: mongo:latest
+    image: mongo:8
     pull_policy: missing
     container_name: vhsranger_db
     restart: unless-stopped
@@ -106,14 +108,24 @@ docker compose up --build -d
 Best for: Unraid users. VHSRanger isn't (yet) listed in Community Applications, but you can add it manually:
 
 1. Install a MongoDB container first (any MongoDB template works), and note its container IP or hostname.
-2. Go to **Docker → Add Container**.
-3. In the **Template** field at the top, paste this URL and hit Tab/Enter to load it:
+2. On the Unraid console, save the template under the name Unraid itself uses for this container:
+   ```bash
+   curl -fsSL -o /boot/config/plugins/dockerMan/templates-user/my-VHSRanger.xml https://raw.githubusercontent.com/xXJimnyCricketXx/VHSRanger/main/unraid-template/vhsranger.xml
    ```
-   https://raw.githubusercontent.com/xXJimnyCricketXx/VHSRanger/main/unraid-template/vhsranger.xml
-   ```
-4. All fields (port, paths, variables) will auto-fill. Adjust the `MongoDB URL`, `JWT Password`, `Session Secret` and `TMDb API Key` fields, then click **Apply**.
+3. Go to **Docker → Add Container → Template: VHSRanger**.
+4. All fields (port, paths, variables) will auto-fill. Adjust the `MongoDB URL`, `JWT Password` and `TMDb API Key` fields, then click **Apply**.
 
-> Applying the template once saves a local copy to `/boot/config/plugins/dockerMan/templates-user/`, so VHSRanger will also show up under **Add Container → Select a template** for future re-installs.
+> **Installed before 1.1.0?** An older install may have left a second template named `vhsranger.xml`. Unraid can then rebuild the container from that file on updates and drop variables added later. Move it out of the way once:
+>
+> ```bash
+> mv /boot/config/plugins/dockerMan/templates-user/vhsranger.xml /boot/config/plugins/dockerMan/vhsranger.xml.bak
+> ```
+>
+> Then add `PUID=99` and `PGID=100` to your container, remove `SESSION_SECRET`, and make sure `JWT Password` is your own random value.
+
+## 🔒 Database Access
+
+The examples above run MongoDB without a login. That is fine as long as only VHSRanger can reach it. If its port is reachable on your network, anyone there can read the database, including password hashes, so don't publish the port or [enable MongoDB authentication](https://www.mongodb.com/docs/manual/tutorial/configure-scram-client-authentication/) and put the credentials into `MONGODB_URL`.
 
 ## 🔄 Updating
 

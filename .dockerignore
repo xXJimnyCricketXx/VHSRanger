@@ -2,3 +2,17 @@ node_modules
 .git
 .env
 mongo_data
+backups
+inbox
+public/uploads
+tests
+docs
+.github
+.vscode
+unraid-template
+assets
+tailwind.config.js
+*.archive
+*.log
+*.md
+docker-compose*.yml

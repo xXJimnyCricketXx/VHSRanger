@@ -18,7 +18,7 @@ const { parseTmdbId } = require('./tmdbId');
  * current data. Safety copies do not count towards the retention.
  */
 
-const BACKUP_DIR = path.join(__dirname, '..', 'backups');
+const BACKUP_DIR = process.env.BACKUP_DIR || path.join(__dirname, '..', 'backups');
 const FILENAME_RE = /^vhsranger_(backup|before_restore)_[\d-]+T[\d-]+\.json$/;
 const BACKUP_PREFIX = 'vhsranger_backup_';
 const SAFETY_PREFIX = 'vhsranger_before_restore_';

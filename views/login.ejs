@@ -4,7 +4,7 @@
   if (typeof settings !== 'undefined' && settings && settings.theme && settings.theme.preset) {
       activePresetKey = settings.theme.preset;
   }
-  const safeFallback = { bg: '#171717', card: '#262626', navbar: '#0a0a0a', text: '#ffffff', highlight: '#ff89a9', highlightText: '#232323' };
+  const safeFallback = { bg: '#171717', card: '#262626', navbar: '#0a0a0a', text: '#ffffff', highlight: '#3dc6d0', highlightText: '#071025' };
   const activeDarkTheme = (THEMES[activePresetKey] && THEMES[activePresetKey].dark) || (THEMES['ranger'] && THEMES['ranger'].dark) || safeFallback;
   const bgColor = activeDarkTheme.bg || safeFallback.bg;
   const cardColor = activeDarkTheme.card || safeFallback.card;
@@ -22,19 +22,18 @@
   <meta name="robots" content="noindex, nofollow">
   <title><%= t('login.title') %></title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&family=Varela+Round&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="<%= baseUrl %>/vendor/fonts/fonts.css">
   <link rel="icon" type="image/png" href="<%= baseUrl %>/ressources/logo.png">
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="<%= baseUrl %>/vendor/tailwind.min.css">
+  <script src="<%= baseUrl %>/vendor/flowbite.min.js"></script>
+  <link rel="stylesheet" href="<%= baseUrl %>/vendor/fontawesome/css/all.min.css" />
   <link rel="stylesheet" href="<%= baseUrl %>/styles/style.css">
 
   <style>
     body { background: <%= bgColor %>; color: <%= textColor %>; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
     .form-bg { background: <%= cardColor %>; border: 1px solid <%= borderColor %>; }
-    input, input::placeholder { background: rgba(255,255,255,0.05) !important; color: <%= textColor %> !important; }
+    input { background: rgba(255,255,255,0.05) !important; color: <%= textColor %> !important; }
+    input::placeholder { color: <%= textColor %> !important; opacity: 0.6; }
     input { border: 1px solid <%= borderColor %> !important; }
     input:focus { outline: none; box-shadow: 0 0 0 2px <%= highlightColor %>; border-color: <%= highlightColor %> !important; }
     .password-toggle { color: #aaa; }

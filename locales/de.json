@@ -521,6 +521,9 @@
     "dup_new": "Nein – als neuen Eintrag anlegen",
     "dup_increment": "Menge +1",
     "passwords_match": "Passwörter stimmen überein",
-    "import_failed": "Import fehlgeschlagen"
+    "import_failed": "Import fehlgeschlagen",
+    "changelog": "Änderungen",
+    "changelog_current": "Aktuelle Version",
+    "close": "Schließen"
   }
 }

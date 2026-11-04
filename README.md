@@ -13,13 +13,14 @@ and see what your collection is made of. Your data stays on your own server.
 
 <p>
   <img src="https://img.shields.io/badge/Status-Beta-3DC6D0?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/Version-1.0.1-3DC6D0?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.1.0-3DC6D0?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Docker-Ready-3DC6D0?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/Unraid-Template-3DC6D0?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid">
 </p>
 
 **[Overview](#-overview)** ·
 **[Features](#-features)** ·
+**[Screenshots](#-screenshots)** ·
 **[Getting Started](#-getting-started)** ·
 **[Unraid](#-unraid)** ·
 **[Configuration](#-configuration)** ·
@@ -58,6 +59,22 @@ apart from physical tapes.
 
 <br/><br/>
 
+## <img src="https://api.iconify.design/lucide/image.svg?color=%233DC6D0" width="20"> Screenshots
+
+<div align="center">
+
+| Dashboard | Collection |
+| :---: | :---: |
+| <img src="docs/screenshots/dashboard.png" width="100%"> | <img src="docs/screenshots/collection.png" width="100%"> |
+
+| Details | Statistics |
+| :---: | :---: |
+| <img src="docs/screenshots/details.png" width="100%"> | <img src="docs/screenshots/statistics.png" width="100%"> |
+
+</div>
+
+<br/><br/>
+
 ## <img src="https://api.iconify.design/lucide/layers-3.svg?color=%233DC6D0" width="20"> Tech Stack
 
 | **Area** | **Technology** | **Purpose** |
@@ -83,7 +100,7 @@ apart from physical tapes.
 git clone https://github.com/xXJimnyCricketXx/VHSRanger.git
 cd VHSRanger
 cp .env.example .env
-# edit .env and set at least PASSJWT and SESSION_SECRET
+# edit .env and set at least PASSJWT, e.g. to the output of: openssl rand -hex 32
 docker compose up -d --build
 ```
 
@@ -122,9 +139,17 @@ curl -fsSL -o /boot/config/plugins/dockerMan/templates-user/my-VHSRanger.xml htt
 
 **3. Create the container.** Go to *Docker → Add Container → Template: VHSRanger*.
 
-Port `18003` and the appdata paths under `/mnt/user/appdata/vhsranger` are pre-filled. Set `MongoDB URL`, `JWT Password` and `Session Secret`, and optionally your TMDb key.
+Port `18003`, the appdata paths under `/mnt/user/appdata/vhsranger` and `PUID`/`PGID` are pre-filled. Set `MongoDB URL` and `JWT Password`, and optionally your TMDb key.
 
 **Updates:** *Docker → Check for Updates*, then apply the update for VHSRanger.
+
+**Installed before 1.1.0?** An older install may have left a second template named `vhsranger.xml`. Unraid can then rebuild the container from that file on updates and drop variables added later. Move it out of the way once:
+
+```bash
+mv /boot/config/plugins/dockerMan/templates-user/vhsranger.xml /boot/config/plugins/dockerMan/vhsranger.xml.bak
+```
+
+Then add `PUID=99` and `PGID=100` to your container, remove `SESSION_SECRET`, and make sure `JWT Password` is your own random value.
 
 <br/><br/>
 
@@ -135,8 +160,9 @@ All settings are environment variables: `.env` for Docker Compose, template vari
 | Variable | Required | Default | Description |
 | --- | :---: | --- | --- |
 | `MONGODB_URL` | ✅ | – | Connection string for your MongoDB instance. The Compose setup uses `mongodb://mongodb:27017/vhsranger` |
-| `PASSJWT` | ✅ | – | Long random secret that signs login tokens |
-| `SESSION_SECRET` | ✅ | – | Long random secret for sessions, different from `PASSJWT` |
+| `PASSJWT` | ✅ | – | Long random secret that signs login tokens. The app refuses to start with an example value |
+| `PUID` / `PGID` | ❌ | Owner of the backups folder, or `1000` if that is root | User and group the container runs as and that own the uploads and backups folders. The Unraid template uses `99` / `100` |
+| `TZ` | ❌ | `UTC` | Time zone for scheduled backups, e.g. `Europe/Berlin`. Unraid sets it for you |
 | `PROD` | ❌ | `false` | Set to `true` **only** when serving over HTTPS through a reverse proxy, otherwise login cookies stop working. Without it, the app sees the proxy's IP for every visitor, so login limits and IP blocks apply to all of them together |
 | `VHS_PORT` | ❌ | `3098` | Port the app listens on inside the container |
 | `BASE_URL` | ❌ | empty | Base path for serving on a sub-path, leave empty to serve from root |
@@ -146,6 +172,10 @@ All settings are environment variables: `.env` for Docker Compose, template vari
 > [!IMPORTANT]
 > Backups are stored in the `backups` folder on the same disk as the app and contain your account data,
 > including password hashes. Copy them to another disk and keep them private.
+
+> [!WARNING]
+> Without a login on MongoDB, anyone who can reach its port can read the database, including password
+> hashes. Keep the port private or [secure it](docs/docker.md#-database-access).
 
 > [!WARNING]
 > The app itself speaks plain HTTP. Keep it inside your home network, and use a VPN or an HTTPS reverse
@@ -165,13 +195,17 @@ VHSRanger/
 ├── utils/               # backups, migrations, visibility and currency helpers
 ├── views/               # EJS templates
 ├── locales/             # translations
-├── public/              # logos, icons and stylesheet
+├── public/              # logos, icons, stylesheet and frontend libraries
 ├── public-tpl/          # web app manifest and service worker templates
+├── assets/              # source of the Tailwind build
+├── tests/               # end-to-end tests
 ├── docs/                # guides and images
 ├── unraid-template/
 ├── .github/workflows/
 │   └── docker-publish.yml
 ├── app.js
+├── changelog.json       # shown in the settings
+├── docker-entrypoint.sh # hands the folders to PUID:PGID, then drops root
 ├── Dockerfile
 ├── docker-compose.yml
 └── .env.example
@@ -183,7 +217,7 @@ VHSRanger/
 
 | **Version** | **Features** | **Status** |
 | :---: | :--- | :---: |
-| **1.1.0** | <ul><li>Automated test suite that runs before every image build</li><li>Container without root rights on a current Node.js LTS</li><li>Frontend libraries served from the app instead of external CDNs</li><li>Refuses to start with an example login secret</li><li>Live updates are limited to admins</li><li>Changelog</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
+| **1.1.0** | <ul><li>Runs on Node.js 24 without root rights, with `PUID` and `PGID`</li><li>Refuses to start with an example login secret, and `SESSION_SECRET` is gone</li><li>Live updates are limited to admins</li><li>Frontend libraries and fonts ship with the app instead of external CDNs</li><li>Automated tests run before every image build</li><li>Major dependency updates, no known vulnerabilities</li><li>Scheduled backups follow the `TZ` time zone</li><li>Print view, statistics and web app use the active theme colors</li><li>The dashboard always shows current data, and logging out always leads to the login page</li><li>Changelog in the settings</li><li>Unraid: no second template that can drop variables on updates</li></ul> | <img src="https://img.shields.io/badge/Released-3DC6D0?style=for-the-badge" alt="Released"> |
 | **1.0.1** | <ul><li>Login right after first-run setup works</li><li>Admin actions show a clear success or error message, and a duplicate user is reported as an error</li><li>"Delete last items" works again</li><li>Natural sorting of titles and cassette numbers</li><li>Totals convert between currencies</li><li>All pages, dialogs and print views follow your language, dates and numbers too</li><li>English is the default language for new users</li><li>The app starts and recovers on its own when the database is unavailable</li><li>Scheduled backups catch up after downtime</li><li>Unusual links no longer cause server errors, and the web app installs correctly</li></ul> | <img src="https://img.shields.io/badge/Released-3DC6D0?style=for-the-badge" alt="Released"> |
 | **1.0.0** | <ul><li>First tagged release with versioned Docker images</li><li>First-run setup is locked once an admin exists</li><li>Login throttling per client, and old sessions end when the password changes</li><li>Avatar uploads only accept real image files</li><li>Hidden tapes, genres and types stay hidden on every page</li><li>Editing a tape keeps its cast, and a second copy never overwrites the first</li><li>Backup restore validates the file first, keeps a safety copy and rolls back on failure</li><li>Updated dependencies</li></ul> | <img src="https://img.shields.io/badge/Released-3DC6D0?style=for-the-badge" alt="Released"> |
 
@@ -202,6 +236,14 @@ npm run dev
 ```
 
 The app is then available at `http://localhost:3098`.
+
+The tests need a MongoDB as well and wipe a database named `vhsranger_test`:
+
+```bash
+TEST_MONGODB_URL=mongodb://127.0.0.1:27017/vhsranger_test npm test
+```
+
+After changing Tailwind classes in the views, rebuild the stylesheet with `npm run build:css`.
 
 <br/><br/>
 

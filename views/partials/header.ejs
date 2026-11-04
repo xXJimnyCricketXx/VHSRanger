@@ -23,29 +23,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>VHSRanger!</title>
   
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            theme: {
-                bg: 'var(--bg-page)',
-                card: 'var(--bg-card)',
-                nav: 'var(--bg-nav)',
-                text: 'var(--text-main)',
-                subtext: 'var(--text-sub)',
-                highlight: 'var(--highlight)'
-            }
-          }
-        }
-      }
-    };
-  </script>
+  <link rel="stylesheet" href="<%= baseUrl %>/vendor/tailwind.min.css">
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.js"></script>
+  <link rel="stylesheet" href="<%= baseUrl %>/vendor/fontawesome/css/all.min.css">
+  <script src="<%= baseUrl %>/vendor/flowbite.min.js"></script>
   <link rel="icon" type="image/png" href="<%= baseUrl %>/ressources/logo.png">
 
   <style>

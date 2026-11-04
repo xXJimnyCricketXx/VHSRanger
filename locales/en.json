@@ -521,6 +521,9 @@
     "dup_new": "No, add as a new entry",
     "dup_increment": "Quantity +1",
     "passwords_match": "Passwords match",
-    "import_failed": "Import failed"
+    "import_failed": "Import failed",
+    "changelog": "Changelog",
+    "changelog_current": "Current version",
+    "close": "Close"
   }
 }

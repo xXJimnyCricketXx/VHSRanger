@@ -451,4 +451,44 @@
         }
     </style>
 
+    <div class="text-center pb-8">
+        <button type="button" id="changelogBtn" class="text-sm font-bold text-primary-theme hover:underline">
+            <i class="fa-solid fa-clock-rotate-left mr-1"></i><%= t('ui.changelog') %>
+        </button>
+    </div>
+
+    <div id="changelogModal" class="hidden fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="card-theme w-full max-w-lg rounded-3xl p-6 shadow-2xl max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                <h2 class="text-xl font-black"><%= t('ui.changelog') %></h2>
+                <button type="button" id="changelogClose" aria-label="<%= t('ui.close') %>" class="w-8 h-8 rounded-full opacity-60 hover:opacity-100">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="overflow-y-auto space-y-5 pr-1">
+                <% changelog.forEach((entry, i) => { %>
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-bold">v<%= entry.version %></span>
+                        <span class="text-xs opacity-50"><%= new Date(entry.date).toLocaleDateString(localeTag) %></span>
+                        <% if (i === 0) { %><span class="text-xs font-bold text-primary-theme"><%= t('ui.changelog_current') %></span><% } %>
+                    </div>
+                    <ul class="list-disc pl-5 text-sm opacity-80 space-y-1">
+                        <% entry.changes.forEach((change) => { %><li><%= change %></li><% }) %>
+                    </ul>
+                </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const modal = document.getElementById('changelogModal');
+            document.getElementById('changelogBtn').addEventListener('click', () => modal.classList.remove('hidden'));
+            document.getElementById('changelogClose').addEventListener('click', () => modal.classList.add('hidden'));
+            modal.addEventListener('click', (event) => { if (event.target === modal) modal.classList.add('hidden'); });
+        })();
+    </script>
+
     <%- include('partials/footer') %>

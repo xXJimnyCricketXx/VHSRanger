@@ -9,10 +9,17 @@
  * production use.
  */
 require('dotenv').config();
+
+// A publicly known signing secret would let anyone forge an admin login.
+const EXAMPLE_SECRETS = ['SomeComplexPassword', 'ChangeThisToAComplexPassword'];
+if (!process.env.PASSJWT || EXAMPLE_SECRETS.includes(process.env.PASSJWT)) {
+  console.error('❌ PASSJWT is missing or still the example value. Set it to a long random secret, e.g. the output of: openssl rand -hex 32');
+  process.exit(1);
+}
+
 const express = require('express');
-const session = require('express-session');
 const path = require('path');
-const { checkUser } = require('./middleware/authMiddleware.js');
+const { checkUser, resolveUser } = require('./middleware/authMiddleware.js');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const http = require('http');
@@ -47,6 +54,18 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   path: BASE_URL + '/socket.io',
+});
+
+// Sockets only carry admin progress events, so only admins may connect.
+io.engine.use(cookieParser());
+io.use(async (socket, next) => {
+  try {
+    const user = await resolveUser(socket.request.cookies && socket.request.cookies.jwt);
+    if (user && user.isAdmin === true) return next();
+  } catch (err) {
+    // Handled below like any other rejected connection.
+  }
+  next(new Error('unauthorized'));
 });
 
 
@@ -103,18 +122,12 @@ app.use(cookieParser());
 app.use(i18nMiddleware.handle(i18next));
 
 
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: process.env.PROD === 'true', httpOnly: true },
-}));
-
 if (process.env.PROD === 'true') {
   app.set('trust proxy', 1); // Trust first proxy
 }
 
 const pkg = require('./package.json');
+const changelog = require('./changelog.json').entries;
 
 // Incext BASE_URL in each res.redirect call
 app.use((req, res, next) => {
@@ -151,6 +164,7 @@ app.use(async (req, res, next) => {
   res.locals.t = req.t;
   res.locals.currentLng = req.language;
   res.locals.appVersion = pkg.version;
+  res.locals.changelog = changelog;
   res.locals.baseUrl = BASE_URL;
   // JSON for inline <script> blocks: data cannot close the script tag.
   res.locals.scriptJson = (value) => JSON.stringify(value).replace(/</g, '\\u003c');

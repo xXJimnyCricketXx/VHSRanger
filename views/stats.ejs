@@ -5,8 +5,8 @@
       activePresetKey = settings.theme.preset;
   }
   const safeFallback = {
-      light: { bg: '#e4e2dd', card: '#ffffff', text: '#232323', highlight: '#ff89a9', highlightText: '#232323' },
-      dark:  { bg: '#171012', card: '#282929', text: '#f1efe9', highlight: '#ff89a9', highlightText: '#232323' }
+      light: { bg: '#e4e2dd', card: '#ffffff', text: '#232323', highlight: '#0e93a0', highlightText: '#0a1020' },
+      dark:  { bg: '#171012', card: '#282929', text: '#f1efe9', highlight: '#3dc6d0', highlightText: '#071025' }
   };
   const activeTheme = THEMES[activePresetKey] || THEMES['ranger'] || safeFallback;
   const modeTheme = isDark ? (activeTheme.dark || safeFallback.dark) : (activeTheme.light || safeFallback.light);
@@ -19,14 +19,14 @@
   const imgPlaceholder = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)';
 %>
 <!DOCTYPE html>
-<html lang="de">
+<html lang="<%= currentLng %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VHSRanger! – <%= t('nav.stats') %></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="<%= baseUrl %>/vendor/tailwind.min.css">
+    <script src="<%= baseUrl %>/vendor/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="<%= baseUrl %>/vendor/fontawesome/css/all.min.css">
     <style>
         body { background: <%= bgColor %>; color: <%= textColor %>; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
         .card { background: <%= cardColor %>; box-shadow: 0 1px 4px rgba(0,0,0,<%= isDark ? '.3' : '.06' %>); }
@@ -158,7 +158,7 @@
                             <p style="font-size:.75rem; opacity:.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= tape.director %></p>
                         </div>
                         <span style="font-size:.85rem; font-weight:900; flex-shrink:0; color:<%= highlightColor %>;">
-                            <%= new Intl.NumberFormat(localeTag, { style: 'currency', currency, maximumFractionDigits: 2 }).format(tape.estimated_price.value * (tape.quantity || 1)) %>
+                            <%= new Intl.NumberFormat(localeTag, { style: 'currency', currency: tape.estimated_price.currency || currency, maximumFractionDigits: 2 }).format(tape.estimated_price.value * (tape.quantity || 1)) %>
                         </span>
                     </div>
                 <% }) %>
@@ -205,7 +205,7 @@
     Chart.defaults.font.size = 11;
 
     const isDark = <%- isDark ? 'true' : 'false' %>;
-    const pink = <%- JSON.stringify(highlightColor) %>;
+    const accent = <%- JSON.stringify(highlightColor) %>;
     const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)';
     const tickColor = isDark ? '#999' : '#888';
     const legendColor = <%- JSON.stringify(textColor) %>;
@@ -227,7 +227,7 @@
         type: 'bar',
         data: {
             labels: genreLabels,
-            datasets: [{ data: genreValues, backgroundColor: pink, borderRadius: 5, borderSkipped: false }]
+            datasets: [{ data: genreValues, backgroundColor: accent, borderRadius: 5, borderSkipped: false }]
         },
         options: {
             maintainAspectRatio: false,
@@ -243,11 +243,11 @@
             labels: yearLabels,
             datasets: [{
                 data: yearValues,
-                borderColor: pink,
-                backgroundColor: 'rgba(255,137,169,.12)',
+                borderColor: accent,
+                backgroundColor: accent + '1f', // 12% opacity
                 borderWidth: 2,
                 pointRadius: 3,
-                pointBackgroundColor: pink,
+                pointBackgroundColor: accent,
                 fill: true,
                 tension: 0.3
             }]
@@ -260,7 +260,7 @@
     });
 
     // Condition pie chart
-    const condColors = [pink,'#ffd3df','#232323','#5c5d5d','#c9b9bd','#a0a0a0','#d0d0d0'];
+    const condColors = [accent,'#8a8d93','#232323','#5c5d5d','#b4b6bb','#a0a0a0','#d0d0d0'];
     new Chart(document.getElementById('conditionChart'), {
         type: 'pie',
         data: {

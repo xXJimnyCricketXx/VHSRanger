@@ -1,0 +1,46 @@
+{
+  "entries": [
+    {
+      "version": "1.1.0",
+      "date": "2026-11-04",
+      "changes": [
+        "The container runs on Node.js 24 and no longer as root. PUID and PGID set the user that owns uploads and backups.",
+        "The app refuses to start with a missing or example login secret. SESSION_SECRET is no longer needed.",
+        "Live updates during a metadata refresh only reach admins.",
+        "Tailwind, Font Awesome, Chart.js, the barcode scanner and all fonts ship with the app, so pages also look right without internet access.",
+        "Automated tests run before every image build.",
+        "Scheduled backups follow the TZ time zone.",
+        "The print view, statistics, web app manifest and login page use the colors of the active theme.",
+        "The dashboard always shows current data, and logging out always leads to the login page. A cached start page could show outdated data since 1.0.1.",
+        "The top list in the statistics shows each amount in its own currency.",
+        "The changelog can be opened in the settings."
+      ]
+    },
+    {
+      "version": "1.0.1",
+      "date": "2026-11-04",
+      "changes": [
+        "Login right after the first-run setup works.",
+        "Admin actions show a clear success or error message, and a duplicate user is reported as an error.",
+        "\"Delete last items\" works again.",
+        "Titles and cassette numbers sort naturally.",
+        "Totals convert between currencies.",
+        "All pages, dialogs and print views follow your language, dates and numbers too.",
+        "The app starts and recovers on its own when the database is unavailable.",
+        "Scheduled backups catch up after downtime."
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-11-04",
+      "changes": [
+        "First tagged release with versioned Docker images.",
+        "First-run setup is locked once an admin exists, and old sessions end when the password changes.",
+        "Login throttling per client, and avatar uploads only accept real image files.",
+        "Hidden tapes, genres and types stay hidden on every page.",
+        "Editing a tape keeps its cast, and a second copy never overwrites the first.",
+        "A backup restore checks the file first, keeps a safety copy and rolls back on failure."
+      ]
+    }
+  ]
+}

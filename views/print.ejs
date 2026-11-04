@@ -1,5 +1,12 @@
+<%
+  const printThemes = locals.allThemes || {};
+  const printPreset = locals.settings && settings.theme && settings.theme.preset;
+  const printTheme = (printThemes[printPreset] || printThemes.ranger || {}).light || {};
+  const accentColor = printTheme.highlight || '#0e93a0';
+  const accentTextColor = printTheme.highlightText || '#fff';
+%>
 <!DOCTYPE html>
-<html lang="de">
+<html lang="<%= currentLng %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,7 +37,7 @@
         }
 
         .print-header h1 span {
-            color: #ff89a9;
+            color: <%= accentColor %>;
         }
 
         .print-header .meta {
@@ -131,13 +138,11 @@
             body { padding: 24px; max-width: 1200px; margin: 0 auto; }
 
             .no-print {
-                position: fixed;
-                top: 16px;
-                right: 16px;
                 display: flex;
-                flex-direction: column;
-                align-items: flex-end;
+                justify-content: flex-end;
+                flex-wrap: wrap;
                 gap: 8px;
+                margin-bottom: 16px;
             }
 
             .btn {
@@ -154,8 +159,8 @@
             }
 
             .btn-print {
-                background: #ff89a9;
-                color: #232323;
+                background: <%= accentColor %>;
+                color: <%= accentTextColor %>;
             }
 
             .btn-back {

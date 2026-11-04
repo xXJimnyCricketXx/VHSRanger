@@ -1,8 +1,9 @@
-const CACHE_NAME = 'vhsranger-v1.0.1';
+const CACHE_NAME = 'vhsranger-v1.1.0';
 
 const STATIC_ASSETS = [
-  '<%= baseUrl %>/',
   '<%= baseUrl %>/styles/style.css',
+  '<%= baseUrl %>/vendor/tailwind.min.css',
+  '<%= baseUrl %>/vendor/fontawesome/css/all.min.css',
   '<%= baseUrl %>/manifest.json',
   '<%= baseUrl %>/ressources/icone-192.png',
   '<%= baseUrl %>/ressources/icone-512.png'
@@ -41,6 +42,9 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
   if (event.request.method !== 'GET') return;
+
+  // Pages depend on the login and the data, so they always come from the server.
+  if (event.request.mode === 'navigate') return;
 
   const dynamicRoutes = [
     // Auth
