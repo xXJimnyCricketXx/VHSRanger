@@ -24,8 +24,13 @@
                     <code class="text-xl md:text-2xl font-mono select-all break-all"><%= newPassword %></code>
                 </div>
             </div>
+            <% } else if (locals.successMessage) { %>
+            <div role="status" class="<%= locals.messageIsError ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-primary-theme/10 border-primary-theme/30 text-primary-theme' %> border p-4 rounded-2xl font-bold flex items-center gap-2 transition-colors">
+                <i class="fa-solid <%= locals.messageIsError ? 'fa-circle-exclamation' : 'fa-check-circle' %>"></i>
+                <%= successMessage %>
+            </div>
             <% } %>
-            
+
                 <%- include('partials/admin-visibility') %>
 
                 <section>
@@ -76,8 +81,7 @@
                                             <%= u.email %>
                                         </td>
                                         <td class="px-6 py-4 text-xs opacity-70">
-                                            <%= new Date(u.lastChange).toLocaleDateString(currentLng==='fr' ? 'fr-FR'
-                                                : 'en-US' ) %>
+                                            <%= new Date(u.lastChange).toLocaleDateString(localeTag) %>
                                         </td>
                                         <td class="px-6 py-4 text-right flex justify-end gap-2">
                                             <form action="<%= baseUrl %>/admin/reset-password" method="POST"
@@ -129,8 +133,7 @@
                                             <%= t('admin.table.last_change') %>
                                         </span>
                                         <span class="text-xs opacity-70">
-                                            <%= new Date(u.lastChange).toLocaleDateString(currentLng==='fr' ? 'fr-FR'
-                                                : 'en-US' ) %>
+                                            <%= new Date(u.lastChange).toLocaleDateString(localeTag) %>
                                         </span>
                                     </div>
                                     <div class="flex gap-2">
@@ -223,7 +226,7 @@
 
                                 <p class="text-[10px] opacity-40 pt-1">
                                     <%= t('admin.backup.schedule.last_run_label') %>:
-                                    <%= backupSettings.lastRunAt ? new Date(backupSettings.lastRunAt).toLocaleString(currentLng === 'de' ? 'de-DE' : 'en-US') : t('admin.backup.schedule.never') %>
+                                    <%= backupSettings.lastRunAt ? new Date(backupSettings.lastRunAt).toLocaleString(localeTag) : t('admin.backup.schedule.never') %>
                                 </p>
 
                                 <button type="submit"
@@ -260,7 +263,7 @@
                                         <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-black/5 dark:bg-white/5" data-filename="<%= b.name %>">
                                             <div class="overflow-hidden">
                                                 <div class="text-xs font-bold truncate">
-                                                    <%= new Date(b.createdAt).toLocaleString(currentLng === 'de' ? 'de-DE' : 'en-US') %>
+                                                    <%= new Date(b.createdAt).toLocaleString(localeTag) %>
                                                 </div>
                                                 <div class="text-[10px] opacity-50">
                                                     <%= (b.size / 1024).toFixed(1) %> KB
@@ -390,8 +393,7 @@
                                             <%= ip.ip %>
                                         </span>
                                         <span class="text-[10px] opacity-50 uppercase tracking-tighter">
-                                            <%= new Date(ip.createdAt).toLocaleDateString(currentLng==='fr' ? 'fr-FR'
-                                                : 'en-US' ) %>
+                                            <%= new Date(ip.createdAt).toLocaleDateString(localeTag) %>
                                         </span>
                                     </div>
                                     <form action="<%= baseUrl %>/admin/unblock-ip" method="POST">
@@ -421,7 +423,7 @@
                             <%= t('admin.logs_title') %>
                         </h2>
                         <div class="md:hidden text-[10px] uppercase font-bold opacity-50 flex items-center gap-1">
-                            <i class="fa-solid fa-left-right animate-pulse"></i> Scroll
+                            <i class="fa-solid fa-left-right animate-pulse"></i> <%= t('ui.scroll') %>
                         </div>
                     </div>
                     <div class="card-theme rounded-2xl overflow-hidden shadow-lg transition-colors">
@@ -496,8 +498,7 @@
                                                 <% const diff=Math.floor((new Date() - new Date(log.timestamp)) /
                                                     60000); let timeText=diff < 60 ? t('admin.time_ago_min', { count:
                                                     diff }) : new
-                                                    Date(log.timestamp).toLocaleDateString(currentLng==='fr' ? 'fr-FR'
-                                                    : 'en-US' ); %>
+                                                    Date(log.timestamp).toLocaleDateString(localeTag); %>
                                                     <%= timeText %>
                                             </td>
                                             <td class="px-6 py-4 text-right">
@@ -636,14 +637,14 @@
                     <label class="block text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">
                         <%= t('admin.modal.username') %>
                     </label>
-                    <input type="text" name="username" required placeholder="Ex: John"
+                    <input type="text" name="username" required placeholder="<%= t('ui.example', { value: 'John' }) %>"
                         class="w-full bg-black/5 dark:bg-white/5 border-2 border-transparent focus:border-primary-theme/30 rounded-2xl p-4 outline-none transition-all placeholder:opacity-30">
                 </div>
                 <div class="space-y-2">
                     <label class="block text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">
                         <%= t('admin.modal.email') %>
                     </label>
-                    <input type="email" name="email" required placeholder="email@domaine.com"
+                    <input type="email" name="email" required placeholder="email@example.com"
                         class="w-full bg-black/5 dark:bg-white/5 border-2 border-transparent focus:border-primary-theme/30 rounded-2xl p-4 outline-none transition-all placeholder:opacity-30">
                 </div>
                 <button type="submit"
@@ -824,7 +825,7 @@
                         body: JSON.stringify({ count, kind })
                     });
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.error || 'Erreur');
+                    if (!response.ok) throw new Error(data.error || window.translations.statusError);
 
                     successText.innerText = interpolate(
                         window.translations.deleteConfirm,
@@ -839,7 +840,7 @@
             }
 
             function formatBackupDate(iso) {
-                return new Date(iso).toLocaleString('<%= currentLng === "de" ? "de-DE" : "en-US" %>');
+                return new Date(iso).toLocaleString('<%= localeTag %>');
             }
 
             function renderBackupList(backups) {

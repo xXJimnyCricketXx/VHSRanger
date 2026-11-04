@@ -239,7 +239,7 @@ router.post('/update-currency', requireAuth, async (req, res) => {
     const userId = res.locals.user._id;
 
     if (!['EUR', 'USD', 'GBP'].includes(currency)) {
-        return res.status(400).send('Devise non supportée');
+        return res.status(400).send(req.t('errors.currency_unsupported'));
     }
 
     try {

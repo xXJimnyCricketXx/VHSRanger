@@ -73,7 +73,7 @@
                                 currentLng === 'en' ? 'English' : 
                                 currentLng === 'de' ? 'Deutsch' : 
                                 currentLng === 'es' ? 'Español' : 
-                                currentLng === 'it' ? 'Italiano' : 'Français' %>
+                                currentLng === 'it' ? 'Italiano' : 'English' %>
                         </span>
                         <i class="fa-solid fa-chevron-down text-[10px] opacity-60 ml-0.5"></i>
                     </button>
@@ -324,7 +324,7 @@
                     if (response.ok) {
                         window.location.href = '<%= baseUrl %>/login';
                     } else {
-                        throw new Error('Import failed');
+                        throw new Error(<%- scriptJson(t('ui.import_failed')) %>);
                     }
                 } catch (err) {
                     errorText.innerText = <%- JSON.stringify(t('setup.error_save_file')) %>;

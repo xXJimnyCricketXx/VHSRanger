@@ -71,7 +71,9 @@
     "too_many_attempts_timed": "Trop de tentatives. Réessaie dans {{seconds}} secondes.",
     "too_many_attempts_blocked": "Trop de tentatives. Réessaie dans 5 minutes.",
     "404_title": "Oups ! Cassette introuvable.",
-    "404_desc": "On dirait que la page que vous cherchez a été enregistrée par-dessus."
+    "404_desc": "On dirait que la page que vous cherchez a été enregistrée par-dessus.",
+    "database_unavailable": "La base de données est actuellement indisponible. Veuillez réessayer dans un instant.",
+    "currency_unsupported": "Cette devise n'est pas prise en charge."
   },
   "messages": {
     "username_current": "C'est votre pseudo actuel.",
@@ -92,7 +94,12 @@
     "password_reset_success": "Mot de passe réinitialisé pour {{name}}.",
     "password_mismatch": "Les mots de passe ne correspondent pas.",
     "avatar_success": "Photo de profil mise à jour !",
-    "batch_barcode_success": "{{count}} codes-barres mis à jour !"
+    "batch_barcode_success": "{{count}} codes-barres mis à jour !",
+    "error": "Une erreur s'est produite.",
+    "saved": "Enregistré.",
+    "delete_self_error": "Vous ne pouvez pas supprimer votre propre compte.",
+    "user_create_error": "L'utilisateur n'a pas pu être créé. Le nom d'utilisateur ou l'e-mail est peut-être déjà pris.",
+    "backup_schedule_saved": "Planification des sauvegardes enregistrée."
   },
   "media": {
     "vhs": "VHS",
@@ -477,5 +484,43 @@
       "fair": "État moyen",
       "poor": "Mauvais état"
     }
+  },
+  "ui": {
+    "print": "Imprimer",
+    "print_pdf": "Imprimer / Enregistrer en PDF",
+    "close_tab": "Fermer l'onglet",
+    "entries": "{{total}} entrées",
+    "as_of": "État au",
+    "page": "Page",
+    "scroll": "Faire défiler",
+    "col_title": "Titre",
+    "col_year": "Année",
+    "col_director": "Réalisateur",
+    "col_distributor": "Distributeur",
+    "col_genre": "Genre",
+    "col_condition": "État",
+    "col_value": "Valeur",
+    "col_type": "Type",
+    "col_location": "Emplacement",
+    "col_cassette": "Cassette n°",
+    "example": "ex. {{value}}",
+    "genres_placeholder": "Action, Comédie, Horreur (séparés par des virgules)",
+    "tmdb_id_hint": "facultatif, pour compléter les métadonnées plus tard",
+    "estimated_ebay": "estimé · annonces eBay",
+    "estimate_btn": "Estimer le prix (annonces eBay)",
+    "estimate_caveat": "Une indication approximative tirée d'annonces actives, pas un prix de vente.",
+    "estimate_no_results": "Aucune annonce trouvée",
+    "estimate_error": "Échec de la recherche",
+    "cassette_taken_title": "Numéro de cassette déjà utilisé",
+    "cassette_taken_text": "Le numéro {{number}} est déjà utilisé. À quelle cassette appartient ce film ?",
+    "cassette_new": "Nouvelle cassette (utiliser {{number}})",
+    "dup_title": "Déjà dans votre collection ?",
+    "dup_subtitle_some": "Cette cassette semble déjà être dans votre collection. S'agit-il de l'une de ces entrées ?",
+    "dup_subtitle_one": "Cette cassette semble déjà être dans votre collection. S'agit-il de cette entrée ?",
+    "dup_subtitle_many": "Il y a {{total}} entrées avec ce titre. Laquelle voulez-vous augmenter ?",
+    "dup_new": "Non, ajouter une nouvelle entrée",
+    "dup_increment": "Quantité +1",
+    "passwords_match": "Les mots de passe correspondent",
+    "import_failed": "Échec de l'importation"
   }
 }

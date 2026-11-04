@@ -171,7 +171,7 @@
                             </p>
                             <p class="opacity-50 text-xs mt-1 transition-colors">
                                 <%= t('settings.last_change') %> : <%= new
-                                        Date(user.lastChange).toLocaleDateString(currentLng==='fr' ? 'fr-FR' : 'en-US' )
+                                        Date(user.lastChange).toLocaleDateString(localeTag)
                                         %>
                             </p>
                         </div>
@@ -397,10 +397,10 @@
         if (confPass) {
             confPass.addEventListener('input', function () {
                 if (this.value !== newPass.value) {
-                    passFeed.textContent = "Ne correspond pas";
+                    passFeed.textContent = <%- scriptJson(t('messages.password_mismatch')) %>;
                     passFeed.className = "text-xs mt-1 text-red-500";
                 } else {
-                    passFeed.textContent = "Correspond";
+                    passFeed.textContent = <%- scriptJson(t('ui.passwords_match')) %>;
                     passFeed.className = "text-xs mt-1 text-green-500";
                 }
             });

@@ -6,8 +6,8 @@
             <div class="w-14 h-14 rounded-full bg-yellow-500/10 text-yellow-500 flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-circle-exclamation text-2xl"></i>
             </div>
-            <h2 class="text-xl font-black mb-1">Bereits vorhanden?</h2>
-            <p class="text-sm opacity-60" id="dupSubtitle">Diese Kassette scheint bereits in deiner Sammlung zu sein. Meinst du einen dieser Einträge?</p>
+            <h2 class="text-xl font-black mb-1"><%= t('ui.dup_title') %></h2>
+            <p class="text-sm opacity-60" id="dupSubtitle"><%= t('ui.dup_subtitle_some') %></p>
         </div>
 
         <div id="duplicateList" class="space-y-3 overflow-y-auto flex-grow mb-6 pr-1"></div>
@@ -15,11 +15,11 @@
         <div class="flex flex-col gap-2 flex-shrink-0">
             <button id="dupNoBtn"
                 class="w-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-bold py-3 rounded-xl transition-all active:scale-95">
-                Nein – als neuen Eintrag anlegen
+                <%= t('ui.dup_new') %>
             </button>
             <button onclick="closeDuplicateModal()"
                 class="w-full text-sm opacity-40 hover:opacity-70 py-2 transition-opacity">
-                Abbrechen
+                <%= t('common.cancel') %>
             </button>
         </div>
     </div>
@@ -62,14 +62,14 @@
                     </div>
                     <button data-id="${m._id}" data-redirect="/vhs/${m._id}"
                         class="dup-increment-btn flex-shrink-0 bg-primary-theme hover:brightness-110 text-white text-xs font-bold px-3 py-2 rounded-xl transition-all active:scale-95 whitespace-nowrap">
-                        <i class="fa-solid fa-plus mr-1"></i>Menge +1
+                        <i class="fa-solid fa-plus mr-1"></i><%= t('ui.dup_increment') %>
                     </button>`;
                 list.appendChild(item);
             });
 
             const subtitle = data.matches.length === 1
-                ? 'Diese Kassette scheint bereits in deiner Sammlung zu sein. Meinst du diesen Eintrag?'
-                : `Es gibt ${data.matches.length} Einträge mit diesem Titel. Welchen möchtest du erhöhen?`;
+                ? <%- scriptJson(t('ui.dup_subtitle_one')) %>
+                : <%- scriptJson(t('ui.dup_subtitle_many', { total: '%TOTAL%' })) %>.replace('%TOTAL%', data.matches.length);
             document.getElementById('dupSubtitle').textContent = subtitle;
 
             document.getElementById('duplicateModal').classList.remove('hidden');
@@ -93,7 +93,7 @@
             }
         } catch (e) {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-plus mr-1"></i>Menge +1';
+            btn.innerHTML = '<i class="fa-solid fa-plus mr-1"></i><%= t('ui.dup_increment') %>';
         }
     });
 

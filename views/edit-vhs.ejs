@@ -265,7 +265,7 @@
                         <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
                             <i class="fa-solid fa-tags mr-1"></i> <%= t('confirm_vhs.field_genres') %>
                         </label>
-                        <input type="text" name="genres" value="<%= tape.genres ? tape.genres.join(', ') : '' %>" placeholder="Action, Komödie..." class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none">
+                        <input type="text" name="genres" value="<%= tape.genres ? tape.genres.join(', ') : '' %>" placeholder="<%= t('ui.genres_placeholder') %>" class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none">
                     </div>
                     <div class="mt-6">
                         <label class="block mb-2 text-sm font-bold uppercase tracking-widest opacity-60"><%= t('confirm_vhs.field_comments') %></label>

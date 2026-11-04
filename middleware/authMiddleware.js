@@ -21,7 +21,8 @@ const resolveUser = async (token) => {
 
   const user = await User.findById(decoded.id);
   if (!user) return null;
-  if (user.lastChange && decoded.iat * 1000 < user.lastChange.getTime()) return null;
+  // iat only has second precision, so lastChange is rounded down before comparing.
+  if (user.lastChange && decoded.iat < Math.floor(user.lastChange.getTime() / 1000)) return null;
   return user;
 };
 

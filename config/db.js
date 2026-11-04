@@ -10,7 +10,10 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const MONGODB_URL = process.env.MONGODB_URL;
 
+mongoose.connection.on('disconnected', () => console.error('⚠️ MongoDB disconnected'));
+mongoose.connection.on('reconnected', () => console.log('✅ MongoDB reconnected'));
+
 module.exports = async () => {
-  await mongoose.connect(MONGODB_URL);
+  await mongoose.connect(MONGODB_URL, { serverSelectionTimeoutMS: 5000 });
   console.log('✅ MongoDB connected');
 };

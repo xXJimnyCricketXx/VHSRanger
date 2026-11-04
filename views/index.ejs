@@ -103,7 +103,7 @@
                         <div class="p-3 md:p-4">
                             <h3 class="font-bold truncate text-sm md:text-base leading-tight"><%= tape.title %></h3>
                             <p class="text-xs opacity-60 truncate mb-1">
-                                <%= tape.director || 'Inconnu' %>
+                                <%= tape.director || t('common.unknown') %>
                             </p>
 
                             <div class="flex items-center gap-1 h-4">
@@ -133,7 +133,7 @@
                 'total': { label: t('stats.total_label'), val: stats.total, unit: t('media.vhs_plural'), icon: 'fa-database', color: 'bg-primary-theme' },
                 'films': { label: t('stats.films_label'), val: stats.films, icon: 'fa-film', color: 'bg-primary-theme' },
                 'originals': { label: t('stats.originals_ratio_unit'), val: `${stats.originals} / ${stats.recordings}`, icon: 'fa-video', color: 'bg-primary-theme' },
-                'totalValue': { label: t('stats.value_label'), val: stats.totalValue > 0 ? new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', { style: 'currency', currency: stats.valueCurrency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(stats.totalValue) : '—', unit: stats.valuedCount > 0 && stats.valuedCount < stats.total ? `(${stats.valuedCount}/${stats.total})` : null, icon: 'fa-sack-dollar', color: 'bg-primary-theme' },
+                'totalValue': { label: t('stats.value_label'), val: stats.totalValue > 0 ? new Intl.NumberFormat(localeTag, { style: 'currency', currency: stats.valueCurrency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(stats.totalValue) : '—', unit: stats.valuedCount > 0 && stats.valuedCount < stats.total ? `(${stats.valuedCount}/${stats.total})` : null, icon: 'fa-sack-dollar', color: 'bg-primary-theme' },
             };
 
             const topConfigs = {

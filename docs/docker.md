@@ -11,7 +11,6 @@ Best for: Most users who just want to run the app. No need to clone the full rep
 Create a new folder and a `docker-compose.yml` file with this content:
 
 ```yaml
-version: '3.8'
 services:
   vhsranger-app:
     image: ghcr.io/xxjimnycricketxx/vhsranger:latest
@@ -21,6 +20,7 @@ services:
       - "18003:3098"
     volumes:
       - ./public/uploads:/app/public/uploads
+      - ./backups:/app/backups
     env_file:
       - .env
     depends_on:
@@ -32,12 +32,9 @@ services:
     restart: unless-stopped
     volumes:
       - ./mongo_data:/data/db
-
-volumes:
-  mongo_data:
 ```
 
-If you are stuggling with the deploy, you can try this config:
+If you are struggling with the deployment, you can try this config:
 
 ```yaml
 services:
@@ -62,6 +59,7 @@ services:
       - '<external_port>:80'
     volumes:
       - /mnt/<uploads_dataset>:/app/public/uploads
+      - /mnt/<backups_dataset>:/app/backups
 
   mongodb:
     image: mongo:latest
@@ -81,7 +79,7 @@ services:
 ### 2. Prepare Environment
 
 If you don't use `environment` in your conf file, ensure you have a `.env` file in the root directory.  
-For both case, you can use the provided `.env.example` as a starting point.
+In both cases, you can use the provided `.env.example` as a starting point.
 
 [Get your API keys here.](./api-keys.md)
 

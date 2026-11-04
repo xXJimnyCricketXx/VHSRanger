@@ -145,7 +145,19 @@ async function putBack(snapshot) {
  * @returns {Promise<string|null>} Name of the safety copy, null if there was no data to keep.
  * @throws {Error} With `status` set and a message that is safe to show.
  */
+let restoreRunning = false;
+
 async function restoreFromData(data) {
+    if (restoreRunning) throw restoreError('A restore is already running', 409);
+    restoreRunning = true;
+    try {
+        return await runRestore(data);
+    } finally {
+        restoreRunning = false;
+    }
+}
+
+async function runRestore(data) {
     const prepared = prepareRestore(data);
     const previous = await buildBackupData();
 
@@ -184,7 +196,10 @@ function writeBackupFile(data, prefix) {
     ensureDir();
     const stamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
     const fileName = `${prefix}${stamp}.json`;
-    fs.writeFileSync(path.join(BACKUP_DIR, fileName), JSON.stringify(data, null, 2));
+    // The temp name does not match FILENAME_RE, so an interrupted write never shows up as a backup.
+    const tempPath = path.join(BACKUP_DIR, `${fileName}.tmp`);
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
+    fs.renameSync(tempPath, path.join(BACKUP_DIR, fileName));
     return fileName;
 }
 
@@ -232,10 +247,25 @@ async function pruneOldBackups(retention) {
     removeFiles(backups.slice(Math.max(1, retention)));
 }
 
-// Checked once a minute. Fires when the clock hits the configured time-of-day
-// and at least `intervalDays` have passed since the last run (tracked in
-// Settings so it survives restarts). No external cron dependency needed for
-// a once-a-day-at-most schedule.
+// Due once the configured time-of-day has passed and the last run was at least
+// `intervalDays` calendar days ago. Comparing calendar days keeps a daily backup
+// daily even if the last run was a few seconds less than 24 hours ago, and a run
+// missed because the app was down is made up for as soon as it is back.
+function isBackupDue(schedule, now) {
+    const [h, m] = (schedule.time || '03:00').split(':').map(Number);
+    const scheduled = new Date(now);
+    scheduled.setHours(h, m, 0, 0);
+    if (now < scheduled) return false;
+
+    if (!schedule.lastRunAt) return true;
+
+    const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const daysSince = Math.round((startOfDay(now) - startOfDay(new Date(schedule.lastRunAt))) / (1000 * 60 * 60 * 24));
+    return daysSince >= (schedule.intervalDays || 1);
+}
+
+// Checked once a minute. The last run is tracked in Settings so it survives
+// restarts. No external cron dependency needed for a once-a-day-at-most schedule.
 let schedulerInterval = null;
 function startScheduler() {
     if (schedulerInterval) return;
@@ -246,13 +276,7 @@ function startScheduler() {
             if (!schedule || !schedule.enabled) return;
 
             const now = new Date();
-            const [h, m] = (schedule.time || '03:00').split(':').map(Number);
-            if (now.getHours() !== h || now.getMinutes() !== m) return;
-
-            const intervalDays = schedule.intervalDays || 1;
-            const lastRun = schedule.lastRunAt ? new Date(schedule.lastRunAt) : null;
-            const daysSince = lastRun ? (now - lastRun) / (1000 * 60 * 60 * 24) : Infinity;
-            if (daysSince < intervalDays) return;
+            if (!isBackupDue(schedule, now)) return;
 
             await createBackup();
             await pruneOldBackups(schedule.retention || 3);
@@ -273,5 +297,6 @@ module.exports = {
     readBackup,
     deleteBackup,
     pruneOldBackups,
+    isBackupDue,
     startScheduler
 };

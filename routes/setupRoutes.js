@@ -25,6 +25,12 @@ router.get('/', async (req, res) => {
     res.render('setup', { error: null });
 });
 
+// Browsers may report a region (de-DE) or a language the app does not have.
+const pickLanguage = (...candidates) => {
+    const supported = User.schema.path('language').enumValues;
+    return candidates.map((c) => String(c || '').split('-')[0]).find((c) => supported.includes(c)) || 'en';
+};
+
 // POST /setup - create initial admin user and issue a JWT
 router.post('/', async (req, res) => {
     try {
@@ -39,7 +45,7 @@ router.post('/', async (req, res) => {
             email,
             password,
             isAdmin: true,
-            language: language || req.language || 'fr',
+            language: pickLanguage(language, req.language),
             lastChange: new Date()
         });
 

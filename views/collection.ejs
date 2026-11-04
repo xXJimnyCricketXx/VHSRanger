@@ -30,9 +30,9 @@
 
                         <a href="<%= baseUrl %>/print/collection" target="_blank"
                             class="flex-shrink-0 w-10 h-10 md:w-auto md:px-4 card-theme hover:text-primary-theme hover:border-primary-theme rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 group"
-                            title="Drucken / Als PDF speichern">
+                            title="<%= t('ui.print_pdf') %>">
                             <i class="fa-solid fa-print group-hover:scale-110 transition-transform"></i>
-                            <span class="hidden md:inline text-xs font-bold uppercase tracking-widest">Drucken</span>
+                            <span class="hidden md:inline text-xs font-bold uppercase tracking-widest"><%= t('ui.print') %></span>
                         </a>
                     </div>
                 <% } %>
@@ -68,7 +68,7 @@
                                     <%= tape.title %>
                                 </h3>
                                 <p class="text-xs opacity-60 truncate mb-2">
-                                    <%= tape.director || 'Inconnu' %>
+                                    <%= tape.director || t('common.unknown') %>
                                 </p>
 
                                 <% if(tape.year) { %>

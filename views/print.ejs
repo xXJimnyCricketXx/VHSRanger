@@ -169,18 +169,18 @@
 
     <div class="no-print">
         <button onclick="window.close()" class="btn btn-back">
-            ✕ Tab schließen
+            ✕ <%= t('ui.close_tab') %>
         </button>
         <button onclick="window.print()" class="btn btn-print">
-            🖨️ Drucken / Als PDF speichern
+            🖨️ <%= t('ui.print_pdf') %>
         </button>
     </div>
 
     <div class="print-header">
         <h1>VHS<span>Ranger!</span> – <%= title %></h1>
         <div class="meta">
-            <div><%= tapes.length %> Einträge</div>
-            <div>Stand: <%= printDate %></div>
+            <div><%= t('ui.entries', { total: tapes.length }) %></div>
+            <div><%= t('ui.as_of') %>: <%= printDate %></div>
         </div>
     </div>
 
@@ -188,22 +188,22 @@
         <thead>
             <tr>
                 <th class="col-nr">#</th>
-                <th class="col-title">Titel</th>
-                <th class="col-year">Jahr</th>
-                <th class="col-artist">Regisseur</th>
-                <th class="col-label">Verleih</th>
-                <th class="col-genre">Genre</th>
-                <th class="col-cond">Zustand</th>
-                <th class="col-value">Wert</th>
-                <th class="col-orig">Typ</th>
-                <th class="col-loc">Standort</th>
-                <th class="col-cassette">Kassette #</th>
+                <th class="col-title"><%= t('ui.col_title') %></th>
+                <th class="col-year"><%= t('ui.col_year') %></th>
+                <th class="col-artist"><%= t('ui.col_director') %></th>
+                <th class="col-label"><%= t('ui.col_distributor') %></th>
+                <th class="col-genre"><%= t('ui.col_genre') %></th>
+                <th class="col-cond"><%= t('ui.col_condition') %></th>
+                <th class="col-value"><%= t('ui.col_value') %></th>
+                <th class="col-orig"><%= t('ui.col_type') %></th>
+                <th class="col-loc"><%= t('ui.col_location') %></th>
+                <th class="col-cassette"><%= t('ui.col_cassette') %></th>
             </tr>
         </thead>
         <tbody>
             <% tapes.forEach((tape, i) => {
                 const price = tape.estimated_price && tape.estimated_price.value
-                    ? new Intl.NumberFormat('de-DE', {
+                    ? new Intl.NumberFormat(localeTag, {
                         style: 'currency',
                         currency: tape.estimated_price.currency || 'EUR',
                         maximumFractionDigits: 2
@@ -231,7 +231,7 @@
 
     <div class="print-footer">
         <span>VHSRanger! – v<%= typeof appVersion !== 'undefined' ? appVersion : '' %></span>
-        <span>Seite <span class="page-nr"></span></span>
+        <span><%= t('ui.page') %> <span class="page-nr"></span></span>
     </div>
 
     <script>

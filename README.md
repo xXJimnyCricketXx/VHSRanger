@@ -13,7 +13,7 @@ and see what your collection is made of. Your data stays on your own server.
 
 <p>
   <img src="https://img.shields.io/badge/Status-Beta-3DC6D0?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/Version-1.0.0-3DC6D0?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.0.1-3DC6D0?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Docker-Ready-3DC6D0?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/Unraid-Template-3DC6D0?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid">
 </p>
@@ -183,8 +183,8 @@ VHSRanger/
 
 | **Version** | **Features** | **Status** |
 | :---: | :--- | :---: |
-| **1.1.0** | <ul><li>Automated test suite that runs before every image build</li><li>Container without root rights on a current Node.js LTS</li><li>Frontend libraries served from the app instead of external CDNs</li><li>Changelog</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
-| **1.0.1** | <ul><li>Bug fixes for first login, admin tools and status messages</li><li>Natural sorting of titles and cassette numbers</li><li>Totals that respect different currencies</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
+| **1.1.0** | <ul><li>Automated test suite that runs before every image build</li><li>Container without root rights on a current Node.js LTS</li><li>Frontend libraries served from the app instead of external CDNs</li><li>Refuses to start with an example login secret</li><li>Live updates are limited to admins</li><li>Changelog</li></ul> | <img src="https://img.shields.io/badge/Planned-6E7681?style=for-the-badge" alt="Planned"> |
+| **1.0.1** | <ul><li>Login right after first-run setup works</li><li>Admin actions show a clear success or error message, and a duplicate user is reported as an error</li><li>"Delete last items" works again</li><li>Natural sorting of titles and cassette numbers</li><li>Totals convert between currencies</li><li>All pages, dialogs and print views follow your language, dates and numbers too</li><li>English is the default language for new users</li><li>The app starts and recovers on its own when the database is unavailable</li><li>Scheduled backups catch up after downtime</li><li>Unusual links no longer cause server errors, and the web app installs correctly</li></ul> | <img src="https://img.shields.io/badge/Released-3DC6D0?style=for-the-badge" alt="Released"> |
 | **1.0.0** | <ul><li>First tagged release with versioned Docker images</li><li>First-run setup is locked once an admin exists</li><li>Login throttling per client, and old sessions end when the password changes</li><li>Avatar uploads only accept real image files</li><li>Hidden tapes, genres and types stay hidden on every page</li><li>Editing a tape keeps its cast, and a second copy never overwrites the first</li><li>Backup restore validates the file first, keeps a safety copy and rolls back on failure</li><li>Updated dependencies</li></ul> | <img src="https://img.shields.io/badge/Released-3DC6D0?style=for-the-badge" alt="Released"> |
 
 See the [open issues](../../issues) for planned features and known problems.

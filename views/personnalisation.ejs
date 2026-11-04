@@ -2,6 +2,13 @@
 
     <div class="max-w-5xl mx-auto px-4 py-10">
 
+        <% if (locals.successMessage) { %>
+        <div role="status" class="bg-primary-theme/10 border border-primary-theme/30 text-primary-theme p-4 rounded-2xl font-bold flex items-center gap-2 mb-6 transition-colors">
+            <i class="fa-solid fa-check-circle"></i>
+            <%= successMessage %>
+        </div>
+        <% } %>
+
         <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-black transition-colors">

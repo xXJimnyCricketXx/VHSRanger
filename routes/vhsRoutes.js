@@ -10,9 +10,45 @@ const User = require('../models/User');
 const { TMDB_LANG_MAP, TMDB_COUNTRY_MAP } = require('../config/constants');
 const { applyVisibilityFilter } = require('../utils/visibilityHelper');
 const { parseTmdbId } = require('../utils/tmdbId');
+const { createValueConverter } = require('../utils/currencyHelper');
 
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p';
+
+// A repeated URL parameter arrives as an array, which no filter can handle.
+const textParam = (value) => (typeof value === 'string' ? value : '');
+
+const DEFAULT_PAGE_SIZE = 25;
+const MAX_PAGE_SIZE = 200;
+const DEFAULT_SORT = 'added_desc';
+const SORT_OPTIONS = {
+    added_desc: { added_at: -1 },
+    added_asc: { added_at: 1 },
+    title_asc: { title: 1 },
+    title_desc: { title: -1 },
+    year_desc: { year: -1 },
+    year_asc: { year: 1 },
+    value_desc: { 'estimated_price.value': -1 },
+    value_asc: { 'estimated_price.value': 1 },
+    cassette_asc: { cassette_number: 1 },
+    cassette_desc: { cassette_number: -1 }
+};
+// Tape 9 comes before tape 10, and upper and lower case sort together.
+const NATURAL_ORDER = { locale: 'en', numericOrdering: true, strength: 2 };
+
+/**
+ * Picks the sort order from the URL, then from the remembered choice in the cookie.
+ *
+ * @returns {string} A key of SORT_OPTIONS.
+ */
+function resolveSort(req, res, cookieName) {
+    const requested = req.query.sort;
+    if (typeof requested === 'string' && Object.hasOwn(SORT_OPTIONS, requested)) {
+        res.cookie(cookieName, requested, { maxAge: 365 * 24 * 60 * 60 * 1000 });
+        return requested;
+    }
+    return Object.hasOwn(SORT_OPTIONS, req.cookies[cookieName]) ? req.cookies[cookieName] : DEFAULT_SORT;
+}
 
 // Gibt den TMDb API-Key zurück – oder leeren String wenn nicht konfiguriert
 function tmdbKey() {
@@ -249,11 +285,9 @@ router.get('/', requireAuth, async (req, res) => {
         const allItems = await Item.find(queryAll).lean();
 
         const userCurrency = res.locals.user.currency || 'EUR';
-        const totalValue = allItems.reduce((acc, i) => {
-            const price = i.estimated_price && i.estimated_price.value;
-            return price ? acc + (price * (i.quantity || 1)) : acc;
-        }, 0);
-        const valuedCount = allItems.filter(i => i.estimated_price && i.estimated_price.value).length;
+        const valueOf = await createValueConverter(allItems, userCurrency);
+        const totalValue = allItems.reduce((acc, i) => acc + (valueOf(i) || 0) * (i.quantity || 1), 0);
+        const valuedCount = allItems.filter(i => valueOf(i) !== null).length;
         const originalsCount = allItems.filter(i => i.is_original !== false).reduce((acc, i) => acc + (i.quantity || 1), 0);
         const recordingsCount = allItems.filter(i => i.is_original === false).reduce((acc, i) => acc + (i.quantity || 1), 0);
 
@@ -334,10 +368,8 @@ router.get('/stats', requireAuth, async (req, res) => {
         const totalTapes = countPhysicalCassettes(allItems);
         const totalFilms = countTotalFilms(allItems);
         const currency = res.locals.user.currency || 'EUR';
-        const totalValue = allItems.reduce((a, i) => {
-            const p = i.estimated_price && i.estimated_price.value;
-            return p ? a + p * (i.quantity || 1) : a;
-        }, 0);
+        const valueOf = await createValueConverter(allItems, currency);
+        const totalValue = allItems.reduce((a, i) => a + (valueOf(i) || 0) * (i.quantity || 1), 0);
 
         // Genre distribution (use genres array, fallback to genre string).
         // Counted per distinct film, not per physical copy/cassette.
@@ -377,7 +409,7 @@ router.get('/stats', requireAuth, async (req, res) => {
         // Top 10 most valuable
         const mostValuable = allItems
             .filter(i => i.estimated_price && i.estimated_price.value)
-            .sort((a, b) => (b.estimated_price.value * (b.quantity || 1)) - (a.estimated_price.value * (a.quantity || 1)))
+            .sort((a, b) => ((valueOf(b) || 0) * (b.quantity || 1)) - ((valueOf(a) || 0) * (a.quantity || 1)))
             .slice(0, 10)
             .map(formatForView);
 
@@ -391,7 +423,7 @@ router.get('/stats', requireAuth, async (req, res) => {
             totalTapes, totalFilms, totalValue, currency,
             genres, conditions, years, originalGroup,
             mostValuable, recentAdditions,
-            printDate: new Date().toLocaleDateString(res.locals.currentLng === 'de' ? 'de-DE' : 'en-US')
+            printDate: new Date().toLocaleDateString(res.locals.localeTag)
         });
     } catch (err) {
         console.error(err);
@@ -402,15 +434,14 @@ router.get('/stats', requireAuth, async (req, res) => {
 router.get('/collection', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const { search, format, location, genre, original } = req.query;
-        let sort = req.query.sort;
-        if (sort) {
-            res.cookie('sortPref', sort, { maxAge: 365 * 24 * 60 * 60 * 1000 });
-        } else {
-            sort = req.cookies.sortPref || 'added_desc';
-        }
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 25;
+        const search = textParam(req.query.search);
+        const location = textParam(req.query.location);
+        const genre = textParam(req.query.genre);
+        const original = textParam(req.query.original);
+        const format = textParam(req.query.format);
+        const sort = resolveSort(req, res, 'sortPref');
+        const page = Math.max(parseInt(req.query.page) || 1, 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE);
 
         let query = { owner: adminId, in_wishlist: false, kind: 'VHS' };
         let conditions = [];
@@ -449,7 +480,7 @@ router.get('/collection', requireAuth, async (req, res) => {
         }
 
         // Wrap conditions if filterMode is 'hide'
-        const filterMode = req.query.filterMode || 'show';
+        const filterMode = req.query.filterMode === 'hide' ? 'hide' : 'show';
         if (filterMode === 'hide' && conditions.length > 0) {
             query.$and = [{ $nor: [{ $and: conditions }] }];
         } else if (conditions.length > 0) {
@@ -458,28 +489,11 @@ router.get('/collection', requireAuth, async (req, res) => {
 
         applyVisibilityFilter(query, res.locals.isAdmin, res.locals.settings);
 
-        const totalItems = await Item.countDocuments(query);
-
-        // Build dynamic sort object
-        const buildSortObj = () => {
-            const sortMap = {
-                'added_desc': { added_at: -1 },
-                'added_asc': { added_at: 1 },
-                'title_asc': { title: 1 },
-                'title_desc': { title: -1 },
-                'year_desc': { year: -1 },
-                'year_asc': { year: 1 },
-                'value_desc': { 'estimated_price.value': -1 },
-                'value_asc': { 'estimated_price.value': 1 },
-                'cassette_asc': { cassette_number: 1 },
-                'cassette_desc': { cassette_number: -1 },
-            };
-
-            return sortMap[sort] || { added_at: -1 };
-        };
+        const totalItems = await Item.countDocuments(query).collation(NATURAL_ORDER);
 
         const items = await Item.find(query)
-            .sort(buildSortObj())
+            .sort(SORT_OPTIONS[sort])
+            .collation(NATURAL_ORDER)
             .skip((page - 1) * limit)
             .limit(limit)
             .lean();
@@ -515,7 +529,7 @@ router.get('/collection', requireAuth, async (req, res) => {
 
 // Add-VHS search page (view)
 router.get('/add-vhs', requireAuth, requireAdmin, (req, res) => {
-    const searchQuery = req.query.search || '';
+    const searchQuery = textParam(req.query.search);
     res.render('add-vhs', { searchQuery, currentType: 'add-vhs' });
 });
 
@@ -755,7 +769,10 @@ router.post('/api/vhs/:id/move-to-collection', requireAuth, requireAdmin, async 
 // Duplicate check
 router.get('/api/check-duplicate', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { title, director, excludeId, cassette_number } = req.query;
+        const title = textParam(req.query.title);
+        const director = textParam(req.query.director);
+        const excludeId = textParam(req.query.excludeId);
+        const cassette_number = textParam(req.query.cassette_number);
         if (!title) return res.json({ duplicate: false });
 
         const adminId = await getAdminId();
@@ -791,7 +808,8 @@ router.get('/api/check-duplicate', requireAuth, requireAdmin, async (req, res) =
 // the frontend asks the user which case it is before saving.
 router.get('/api/check-cassette-number', requireAuth, requireAdmin, async (req, res) => {
     try {
-        const { cassette_number, excludeId } = req.query;
+        const cassette_number = textParam(req.query.cassette_number);
+        const excludeId = textParam(req.query.excludeId);
         const val = (cassette_number || '').trim();
         if (!val) return res.json({ taken: false });
 
@@ -891,11 +909,12 @@ router.get('/print/collection', requireAuth, async (req, res) => {
         const adminId = await getAdminId();
         const items = await Item.find(visibleQuery(res, { owner: adminId, in_wishlist: false, kind: 'VHS' }))
             .sort({ title: 1 })
+            .collation(NATURAL_ORDER)
             .lean();
         res.render('print', {
             tapes: items.map(formatForView),
             title: req.t('collection.title'),
-            printDate: new Date().toLocaleDateString(res.locals.currentLng === 'de' ? 'de-DE' : 'en-US')
+            printDate: new Date().toLocaleDateString(res.locals.localeTag)
         });
     } catch (err) {
         res.status(500).send(req.t('errors.generic_server_error'));
@@ -907,11 +926,12 @@ router.get('/print/wishlist', requireAuth, async (req, res) => {
         const adminId = await getAdminId();
         const items = await Item.find(visibleQuery(res, { owner: adminId, in_wishlist: true, kind: 'VHS' }))
             .sort({ title: 1 })
+            .collation(NATURAL_ORDER)
             .lean();
         res.render('print', {
             tapes: items.map(formatForView),
             title: req.t('wishlist.title'),
-            printDate: new Date().toLocaleDateString(res.locals.currentLng === 'de' ? 'de-DE' : 'en-US')
+            printDate: new Date().toLocaleDateString(res.locals.localeTag)
         });
     } catch (err) {
         res.status(500).send(req.t('errors.generic_server_error'));
@@ -921,13 +941,11 @@ router.get('/print/wishlist', requireAuth, async (req, res) => {
 router.get('/wishlist', requireAuth, async (req, res) => {
     try {
         const adminId = await getAdminId();
-        const { search, location, genre, original } = req.query;
-        let sort = req.query.sort;
-        if (sort) {
-            res.cookie('wishlistSortPref', sort, { maxAge: 365 * 24 * 60 * 60 * 1000 });
-        } else {
-            sort = req.cookies.wishlistSortPref || 'added_desc';
-        }
+        const search = textParam(req.query.search);
+        const location = textParam(req.query.location);
+        const genre = textParam(req.query.genre);
+        const original = textParam(req.query.original);
+        const sort = resolveSort(req, res, 'wishlistSortPref');
 
         let query = { owner: adminId, in_wishlist: true, kind: 'VHS' };
         let conditions = [];
@@ -961,7 +979,7 @@ router.get('/wishlist', requireAuth, async (req, res) => {
             conditions.push({ is_original: false });
         }
 
-        const filterMode = req.query.filterMode || 'show';
+        const filterMode = req.query.filterMode === 'hide' ? 'hide' : 'show';
         if (filterMode === 'hide' && conditions.length > 0) {
             query.$and = [{ $nor: [{ $and: conditions }] }];
         } else if (conditions.length > 0) {
@@ -970,23 +988,7 @@ router.get('/wishlist', requireAuth, async (req, res) => {
 
         applyVisibilityFilter(query, res.locals.isAdmin, res.locals.settings);
 
-        const buildSortObj = () => {
-            const sortMap = {
-                'added_desc': { added_at: -1 },
-                'added_asc': { added_at: 1 },
-                'title_asc': { title: 1 },
-                'title_desc': { title: -1 },
-                'year_desc': { year: -1 },
-                'year_asc': { year: 1 },
-                'value_desc': { 'estimated_price.value': -1 },
-                'value_asc': { 'estimated_price.value': 1 },
-                'cassette_asc': { cassette_number: 1 },
-                'cassette_desc': { cassette_number: -1 },
-            };
-            return sortMap[sort] || { added_at: -1 };
-        };
-
-        const items = await Item.find(query).sort(buildSortObj()).lean();
+        const items = await Item.find(query).sort(SORT_OPTIONS[sort]).collation(NATURAL_ORDER).lean();
 
         res.render('wishlist', {
             tapes: items.map(formatForView),

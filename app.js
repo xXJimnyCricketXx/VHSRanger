@@ -38,6 +38,11 @@ const adminRoutes = require('./routes/adminRoutes.js');
 const settingsRoutes = require('./routes/settingsRoutes.js');
 const backupRoutes = require('./routes/backupRoutes.js');
 
+// A forgotten await must not take the whole app down.
+process.on('unhandledRejection', (reason) => {
+  console.error('[ERR] Unhandled rejection:', reason);
+});
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -48,7 +53,9 @@ const io = new Server(server, {
 i18next
   .use(i18nMiddleware.LanguageDetector) // Detect language via query/cookie/header
   .init({
-    fallbackLng: 'fr',
+    fallbackLng: 'en',
+    supportedLngs: ['en', 'fr', 'es', 'it', 'de'],
+    load: 'languageOnly', // de-DE uses the de translations
     preload: ['fr', 'en', 'es', 'it', 'de'],
     resources: {
       en: { translation: require('./locales/en.json') },
@@ -121,6 +128,14 @@ app.use((req, res, next) => {
     }
   };
 
+  next();
+});
+
+// Without a database no page can work: answer right away instead of hanging.
+app.use((req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).send(req.t('errors.database_unavailable'));
+  }
   next();
 });
 
@@ -243,17 +258,31 @@ app.use((err, req, res, next) => {
 const connectDB = require('./config/db.js');
 const migrateDatabase = require('./utils/migrate.js');
 const { startScheduler } = require('./utils/backupScheduler.js');
-// Database connection and server start
-connectDB()
+// The database may start later than the app (e.g. after a server reboot), so keep trying.
+const connectWithRetry = async () => {
+  for (;;) {
+    try {
+      await connectDB();
+      return;
+    } catch (err) {
+      console.log('❌DB Error:', err.message);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+  }
+};
+
+// Server start and database connection
+const port = process.env.VHS_PORT || 3098;
+server.listen(port, () => {
+    console.log(`🚀 Server started on port ${port}`);
+});
+
+connectWithRetry()
   .then(async () => {
     await migrateDatabase();
     startScheduler();
-    const port = process.env.VHS_PORT || 3098;
-    server.listen(port, () => {
-        console.log(`🚀 Server started on port ${port}`);
-    });
   })
-  .catch((err) => console.log('❌DB Error:', err));
+  .catch((err) => console.error('[ERR] Startup:', err));
 
 
 // Socket event

@@ -6,9 +6,9 @@
             <div class="w-14 h-14 rounded-full bg-yellow-500/10 text-yellow-500 flex items-center justify-center mx-auto mb-4">
                 <i class="fa-solid fa-tag text-2xl"></i>
             </div>
-            <h2 class="text-xl font-black mb-1">Kassettennummer bereits vergeben</h2>
+            <h2 class="text-xl font-black mb-1"><%= t('ui.cassette_taken_title') %></h2>
             <p class="text-sm opacity-60">
-                Die Nummer <span id="cassetteNumberLabel" class="font-bold"></span> wird schon verwendet. Zu welcher Kassette gehört dieser Film?
+                <%- t('ui.cassette_taken_text', { number: '<span id="cassetteNumberLabel" class="font-bold"></span>', interpolation: { escapeValue: false } }) %>
             </p>
         </div>
 
@@ -17,11 +17,11 @@
         <div class="flex flex-col gap-2 flex-shrink-0">
             <button id="cassetteNewBtn"
                 class="w-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 font-bold py-3 rounded-xl transition-all active:scale-95">
-                Neue Kassette (<span id="cassetteSuggestion"></span> verwenden)
+                <%- t('ui.cassette_new', { number: '<span id="cassetteSuggestion"></span>', interpolation: { escapeValue: false } }) %>
             </button>
             <button onclick="closeCassetteModal()"
                 class="w-full text-sm opacity-40 hover:opacity-70 py-2 transition-opacity">
-                Abbrechen
+                <%= t('common.cancel') %>
             </button>
         </div>
     </div>

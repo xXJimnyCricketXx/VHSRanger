@@ -71,7 +71,9 @@
     "too_many_attempts_timed": "Too many attempts. Try again in {{seconds}} seconds.",
     "too_many_attempts_blocked": "Too many attempts. Try again in 5 minutes.",
     "404_title": "Oops! Tape not found.",
-    "404_desc": "The page you are looking for seems to have been taped over."
+    "404_desc": "The page you are looking for seems to have been taped over.",
+    "database_unavailable": "The database is currently unavailable. Please try again in a moment.",
+    "currency_unsupported": "This currency is not supported."
   },
   "messages": {
     "username_current": "This is your current username.",
@@ -92,7 +94,12 @@
     "password_reset_success": "Password reset for {{name}}.",
     "password_mismatch": "Passwords do not match.",
     "avatar_success": "Profile picture updated!",
-    "batch_barcode_success": "{{count}} barcodes updated!"
+    "batch_barcode_success": "{{count}} barcodes updated!",
+    "error": "Something went wrong.",
+    "saved": "Saved.",
+    "delete_self_error": "You cannot delete your own account.",
+    "user_create_error": "The user could not be created. The username or email may already be taken.",
+    "backup_schedule_saved": "Backup schedule saved."
   },
   "media": {
     "vhs": "VHS",
@@ -477,5 +484,43 @@
       "fair": "Fair",
       "poor": "Poor"
     }
+  },
+  "ui": {
+    "print": "Print",
+    "print_pdf": "Print / Save as PDF",
+    "close_tab": "Close tab",
+    "entries": "{{total}} entries",
+    "as_of": "As of",
+    "page": "Page",
+    "scroll": "Scroll",
+    "col_title": "Title",
+    "col_year": "Year",
+    "col_director": "Director",
+    "col_distributor": "Distributor",
+    "col_genre": "Genre",
+    "col_condition": "Condition",
+    "col_value": "Value",
+    "col_type": "Type",
+    "col_location": "Location",
+    "col_cassette": "Tape #",
+    "example": "e.g. {{value}}",
+    "genres_placeholder": "Action, Comedy, Horror (comma-separated)",
+    "tmdb_id_hint": "optional, for adding metadata later",
+    "estimated_ebay": "estimated · eBay listings",
+    "estimate_btn": "Estimate price (eBay listings)",
+    "estimate_caveat": "A rough guide from active listings, not a sale price.",
+    "estimate_no_results": "No listings found",
+    "estimate_error": "Search failed",
+    "cassette_taken_title": "Tape number already in use",
+    "cassette_taken_text": "The number {{number}} is already in use. Which tape does this film belong to?",
+    "cassette_new": "New tape (use {{number}})",
+    "dup_title": "Already in your collection?",
+    "dup_subtitle_some": "This tape seems to be in your collection already. Do you mean one of these entries?",
+    "dup_subtitle_one": "This tape seems to be in your collection already. Do you mean this entry?",
+    "dup_subtitle_many": "There are {{total}} entries with this title. Which one do you want to increase?",
+    "dup_new": "No, add as a new entry",
+    "dup_increment": "Quantity +1",
+    "passwords_match": "Passwords match",
+    "import_failed": "Import failed"
   }
 }

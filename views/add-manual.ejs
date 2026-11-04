@@ -73,7 +73,7 @@
                         <%= t('confirm_vhs.year_label') %>
                     </label>
                     <input type="number" name="year" min="1900" max="<%= new Date().getFullYear() %>"
-                        placeholder="z.B. 1994"
+                        placeholder="<%= t('ui.example', { value: '1994' }) %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -82,7 +82,7 @@
                         <%= t('confirm_vhs.country') %>
                     </label>
                     <input type="text" name="country"
-                        placeholder="z.B. Germany, UK, US"
+                        placeholder="<%= t('ui.example', { value: 'Germany, UK, US' }) %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -91,7 +91,7 @@
                         <%= t('confirm_vhs.distributor_label') %>
                     </label>
                     <input type="text" name="distributor"
-                        placeholder="z.B. VCL, VPS, Warner Home Video"
+                        placeholder="<%= t('ui.example', { value: 'VCL, VPS, Warner Home Video' }) %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -100,7 +100,7 @@
                         <%= t('confirm_vhs.catalog_label') %>
                     </label>
                     <input type="text" name="catalog_number"
-                        placeholder="z.B. VHS-4711"
+                        placeholder="<%= t('ui.example', { value: 'VHS-4711' }) %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -109,7 +109,7 @@
                         <%= t('confirm_vhs.field_genres') %>
                     </label>
                     <input type="text" name="genres"
-                        placeholder="Action, Komödie, Horror (kommagetrennt)"
+                        placeholder="<%= t('ui.genres_placeholder') %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -179,7 +179,7 @@
                         <%= t('confirm_vhs.barcode_label') %>
                     </label>
                     <input type="text" name="barcode"
-                        placeholder="z.B. 4006448122129"
+                        placeholder="<%= t('ui.example', { value: '4006448122129' }) %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -205,7 +205,7 @@
                         <%= t('confirm_vhs.runtime_label') %>
                     </label>
                     <input type="number" name="runtime" min="1"
-                        placeholder="z.B. 96"
+                        placeholder="<%= t('ui.example', { value: '96' }) %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -214,7 +214,7 @@
                         <%= t('confirm_vhs.age_rating_label') %>
                     </label>
                     <input type="text" name="age_rating"
-                        placeholder="z.B. 12, 16, 18"
+                        placeholder="<%= t('ui.example', { value: '12, 16, 18' }) %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 
@@ -271,7 +271,7 @@
                             <%= t('confirm_vhs.estimated_value_label') %>
                         </label>
                         <input type="number" name="estimated_value" min="0" step="0.01"
-                            placeholder="z.B. 25.00"
+                            placeholder="<%= t('ui.example', { value: '25.00' }) %>"
                             class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                     </div>
                     <div>
@@ -288,10 +288,10 @@
 
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold uppercase tracking-wider opacity-60 mb-2">
-                        TMDb-ID <span class="opacity-50 font-normal normal-case text-xs ml-2">– optional, für spätere Metadaten-Anreicherung</span>
+                        TMDb-ID <span class="opacity-50 font-normal normal-case text-xs ml-2">– <%= t('ui.tmdb_id_hint') %></span>
                     </label>
                     <input type="text" name="tmdb_id"
-                        placeholder="z.B. 603"
+                        placeholder="<%= t('ui.example', { value: '603' }) %>"
                         class="w-full bg-black/5 dark:bg-white/5 border border-transparent rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary-theme outline-none transition-all">
                 </div>
 

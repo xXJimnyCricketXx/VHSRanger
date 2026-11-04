@@ -292,7 +292,7 @@
                             <%= t('detail.added_at') %>
                         </span>
                         <span class="text-sm transition-colors">
-                            <%= new Date(tape.added_at).toLocaleDateString(currentLng==='de' ? 'de-DE' : (currentLng==='fr' ? 'fr-FR' : 'en-US') ) %>
+                            <%= new Date(tape.added_at).toLocaleDateString(localeTag) %>
                         </span>
                     </div>
                     <% if (tape.tmdb_id || tape.imdb_id) { %>
@@ -341,7 +341,7 @@
                                     <div class="flex items-baseline gap-2 flex-wrap">
                                         <span class="text-2xl font-black text-primary-theme">
                                             <%=
-                                                new Intl.NumberFormat(currentLng === 'de' ? 'de-DE' : 'en-US', {
+                                                new Intl.NumberFormat(localeTag, {
                                                     style: 'currency',
                                                     currency: tape.estimated_price.currency || 'EUR',
                                                     minimumFractionDigits: 2,
@@ -351,11 +351,11 @@
                                         </span>
                                         <% if (tape.estimated_price.updated_at) { %>
                                         <span class="text-xs opacity-40">
-                                            Stand: <%= new Date(tape.estimated_price.updated_at).toLocaleDateString(currentLng === 'de' ? 'de-DE' : 'en-US') %>
+                                            <%= t('ui.as_of') %>: <%= new Date(tape.estimated_price.updated_at).toLocaleDateString(localeTag) %>
                                         </span>
                                         <% } %>
                                         <% if (tape.estimated_price.source === 'ebay_estimate') { %>
-                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 opacity-60">geschätzt · eBay-Angebote</span>
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 opacity-60"><%= t('ui.estimated_ebay') %></span>
                                         <% } %>
                                     </div>
                                 </div>
@@ -371,9 +371,9 @@
                             <button id="estimateBtn" onclick="estimatePrice()"
                                 class="text-xs bg-black/5 dark:bg-white/5 hover:bg-primary-theme hover:text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-2 w-full justify-center font-bold">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                <span id="estimateBtnLabel">Preis schätzen (eBay-Angebote)</span>
+                                <span id="estimateBtnLabel"><%= t('ui.estimate_btn') %></span>
                             </button>
-                            <p class="text-[10px] opacity-40 mt-1.5 text-center">Grober Anhaltspunkt aus aktiven Angeboten, kein Verkaufspreis.</p>
+                            <p class="text-[10px] opacity-40 mt-1.5 text-center"><%= t('ui.estimate_caveat') %></p>
                         </div>
                         <% } %>
                     <% } %>
@@ -394,7 +394,7 @@
             const btn = document.getElementById('estimateBtn');
             const label = document.getElementById('estimateBtnLabel');
             btn.disabled = true;
-            label.textContent = 'Suche läuft…';
+            label.textContent = <%- scriptJson(t('common.searching')) %>;
             try {
                 const res = await fetch(`<%= baseUrl %>/api/vhs/<%= tape._id %>/estimate-price`, { method: 'POST' });
                 const data = await res.json();
@@ -402,11 +402,11 @@
                     window.location.reload();
                     return;
                 }
-                label.textContent = data.error === 'no_results' ? 'Keine Angebote gefunden' : 'Fehler bei der Suche';
-                setTimeout(() => { label.textContent = 'Preis schätzen (eBay-Angebote)'; btn.disabled = false; }, 3000);
+                label.textContent = data.error === 'no_results' ? <%- scriptJson(t('ui.estimate_no_results')) %> : <%- scriptJson(t('ui.estimate_error')) %>;
+                setTimeout(() => { label.textContent = <%- scriptJson(t('ui.estimate_btn')) %>; btn.disabled = false; }, 3000);
             } catch (e) {
-                label.textContent = 'Fehler bei der Suche';
-                setTimeout(() => { label.textContent = 'Preis schätzen (eBay-Angebote)'; btn.disabled = false; }, 3000);
+                label.textContent = <%- scriptJson(t('ui.estimate_error')) %>;
+                setTimeout(() => { label.textContent = <%- scriptJson(t('ui.estimate_btn')) %>; btn.disabled = false; }, 3000);
             }
         }
 

@@ -10,7 +10,15 @@ VHSRanger relies on the TMDb (The Movie Database) API to fetch film metadata, co
 1.  Create a free account on [themoviedb.org](https://www.themoviedb.org/).
 2.  Go to **Settings > API**.
 3.  Request an **API Key** (choose "Developer" use).
-4.  Copy the **API Read Access Token** (or the v3 API key) and paste it into your `.env` file as `TMDB_API_KEY`.
+4.  Copy the **API Read Access Token** and paste it into your `.env` file as `TMDB_API_KEY`.
+
+## 💰 eBay Browse API (Optional)
+
+*Used only for the "Estimate price" button on the detail page. The app works without it.*
+
+1.  Create a free account on [developer.ebay.com](https://developer.ebay.com).
+2.  Create a **production** keyset for your application.
+3.  Paste the **App ID** and the **Cert ID** into your `.env` file as `EBAY_APP_ID` and `EBAY_CERT_ID`.
 
 ---
 

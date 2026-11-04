@@ -71,7 +71,9 @@
     "too_many_attempts_timed": "Demasiados intentos. Inténtalo de nuevo en {{seconds}} segundos.",
     "too_many_attempts_blocked": "Demasiados intentos. Inténtalo de nuevo en 5 minutos.",
     "404_title": "¡Ups! Cinta no encontrada.",
-    "404_desc": "Parece que la página que buscas fue grabada encima."
+    "404_desc": "Parece que la página que buscas fue grabada encima.",
+    "database_unavailable": "La base de datos no está disponible en este momento. Inténtalo de nuevo en un momento.",
+    "currency_unsupported": "Esta moneda no es compatible."
   },
   "messages": {
     "username_current": "Este es tu nombre de usuario actual.",
@@ -92,7 +94,12 @@
     "password_reset_success": "Contraseña restablecida para {{name}}.",
     "password_mismatch": "Las contraseñas no coinciden.",
     "avatar_success": "¡Foto de perfil actualizada!",
-    "batch_barcode_success": "¡{{count}} códigos de barras actualizados!"
+    "batch_barcode_success": "¡{{count}} códigos de barras actualizados!",
+    "error": "Algo salió mal.",
+    "saved": "Guardado.",
+    "delete_self_error": "No puedes eliminar tu propia cuenta.",
+    "user_create_error": "No se pudo crear el usuario. Es posible que el nombre de usuario o el correo ya estén en uso.",
+    "backup_schedule_saved": "Programación de copias de seguridad guardada."
   },
   "media": {
     "vhs": "VHS",
@@ -477,5 +484,43 @@
       "fair": "Regular",
       "poor": "Mala"
     }
+  },
+  "ui": {
+    "print": "Imprimir",
+    "print_pdf": "Imprimir / Guardar como PDF",
+    "close_tab": "Cerrar pestaña",
+    "entries": "{{total}} entradas",
+    "as_of": "Fecha",
+    "page": "Página",
+    "scroll": "Desplazar",
+    "col_title": "Título",
+    "col_year": "Año",
+    "col_director": "Director",
+    "col_distributor": "Distribuidor",
+    "col_genre": "Género",
+    "col_condition": "Estado",
+    "col_value": "Valor",
+    "col_type": "Tipo",
+    "col_location": "Ubicación",
+    "col_cassette": "Cinta n.º",
+    "example": "p. ej. {{value}}",
+    "genres_placeholder": "Acción, Comedia, Terror (separados por comas)",
+    "tmdb_id_hint": "opcional, para completar los metadatos más tarde",
+    "estimated_ebay": "estimado · anuncios de eBay",
+    "estimate_btn": "Estimar precio (anuncios de eBay)",
+    "estimate_caveat": "Una referencia aproximada de anuncios activos, no un precio de venta.",
+    "estimate_no_results": "No se encontraron anuncios",
+    "estimate_error": "Error en la búsqueda",
+    "cassette_taken_title": "Número de cinta ya en uso",
+    "cassette_taken_text": "El número {{number}} ya está en uso. ¿A qué cinta pertenece esta película?",
+    "cassette_new": "Cinta nueva (usar {{number}})",
+    "dup_title": "¿Ya está en tu colección?",
+    "dup_subtitle_some": "Esta cinta parece estar ya en tu colección. ¿Te refieres a una de estas entradas?",
+    "dup_subtitle_one": "Esta cinta parece estar ya en tu colección. ¿Te refieres a esta entrada?",
+    "dup_subtitle_many": "Hay {{total}} entradas con este título. ¿Cuál quieres aumentar?",
+    "dup_new": "No, añadir como entrada nueva",
+    "dup_increment": "Cantidad +1",
+    "passwords_match": "Las contraseñas coinciden",
+    "import_failed": "Error en la importación"
   }
 }

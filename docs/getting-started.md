@@ -5,7 +5,7 @@ This guide will walk you through setting up **VHSRanger** on your local machine 
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed:
-* **Node.js** (v18.x or higher)
+* **Node.js** (v20.x or higher)
 * **npm** or **yarn**
 * **MongoDB** (v6.x or higher)
 
