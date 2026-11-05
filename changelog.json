@@ -1,6 +1,14 @@
 {
   "entries": [
     {
+      "version": "1.1.1",
+      "date": "2026-11-05",
+      "changes": [
+        "This release delivers all changes listed under 1.1.0. No image was published for 1.1.0.",
+        "The Docker guide explains what to do when MongoDB refuses to start on a very new Linux kernel."
+      ]
+    },
+    {
       "version": "1.1.0",
       "date": "2026-11-04",
       "changes": [

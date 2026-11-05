@@ -16,9 +16,15 @@ jobs:
 
     services:
       mongodb:
-        image: mongo:8
+        # Current 8.3 images refuse to start on the kernel of the GitHub runners.
+        image: mongo:8.2
         ports:
           - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     steps:
       - name: Checkout repository

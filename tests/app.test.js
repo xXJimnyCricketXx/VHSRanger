@@ -58,9 +58,11 @@ before(async () => {
 });
 
 after(async () => {
-    await stopApp(app);
-    await client.db().dropDatabase();
-    await client.close();
+    if (app) await stopApp(app);
+    if (client) {
+        await client.db().dropDatabase();
+        await client.close();
+    }
     fs.rmSync(BACKUP_DIR, { recursive: true, force: true });
 });
 

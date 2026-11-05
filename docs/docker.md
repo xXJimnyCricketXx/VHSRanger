@@ -78,6 +78,8 @@ services:
 >   image: mongo:4.4.18
 > ```
 
+> Note: If MongoDB exits with `Linux kernel versions 6.19 and newer has a known incompatibility`, your host kernel is too new for the current `mongo:8` image. This can happen on Ubuntu 26.04, for example. Use `mongo:8.2` instead. A database that already ran on a newer version may not open with an older one, so export a backup first and restore it after switching if needed.
+
 ### 2. Prepare Environment
 
 If you don't use `environment` in your conf file, ensure you have a `.env` file in the root directory.  
@@ -115,7 +117,7 @@ Best for: Unraid users. VHSRanger isn't (yet) listed in Community Applications, 
 3. Go to **Docker → Add Container → Template: VHSRanger**.
 4. All fields (port, paths, variables) will auto-fill. Adjust the `MongoDB URL`, `JWT Password` and `TMDb API Key` fields, then click **Apply**.
 
-> **Installed before 1.1.0?** An older install may have left a second template named `vhsranger.xml`. Unraid can then rebuild the container from that file on updates and drop variables added later. Move it out of the way once:
+> **Installed before 1.1.1?** An older install may have left a second template named `vhsranger.xml`. Unraid can then rebuild the container from that file on updates and drop variables added later. Move it out of the way once:
 >
 > ```bash
 > mv /boot/config/plugins/dockerMan/templates-user/vhsranger.xml /boot/config/plugins/dockerMan/vhsranger.xml.bak

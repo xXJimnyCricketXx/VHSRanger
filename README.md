@@ -13,7 +13,7 @@ and see what your collection is made of. Your data stays on your own server.
 
 <p>
   <img src="https://img.shields.io/badge/Status-Beta-3DC6D0?style=for-the-badge" alt="Status">
-  <img src="https://img.shields.io/badge/Version-1.1.0-3DC6D0?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.1.1-3DC6D0?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Docker-Ready-3DC6D0?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/Unraid-Template-3DC6D0?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid">
 </p>
@@ -143,7 +143,7 @@ Port `18003`, the appdata paths under `/mnt/user/appdata/vhsranger` and `PUID`/`
 
 **Updates:** *Docker → Check for Updates*, then apply the update for VHSRanger.
 
-**Installed before 1.1.0?** An older install may have left a second template named `vhsranger.xml`. Unraid can then rebuild the container from that file on updates and drop variables added later. Move it out of the way once:
+**Installed before 1.1.1?** An older install may have left a second template named `vhsranger.xml`. Unraid can then rebuild the container from that file on updates and drop variables added later. Move it out of the way once:
 
 ```bash
 mv /boot/config/plugins/dockerMan/templates-user/vhsranger.xml /boot/config/plugins/dockerMan/vhsranger.xml.bak
@@ -217,7 +217,7 @@ VHSRanger/
 
 | **Version** | **Features** | **Status** |
 | :---: | :--- | :---: |
-| **1.1.0** | <ul><li>Runs on Node.js 24 without root rights, with `PUID` and `PGID`</li><li>Refuses to start with an example login secret, and `SESSION_SECRET` is gone</li><li>Live updates are limited to admins</li><li>Frontend libraries and fonts ship with the app instead of external CDNs</li><li>Automated tests run before every image build</li><li>Major dependency updates, no known vulnerabilities</li><li>Scheduled backups follow the `TZ` time zone</li><li>Print view, statistics and web app use the active theme colors</li><li>The dashboard always shows current data, and logging out always leads to the login page</li><li>Changelog in the settings</li><li>Unraid: no second template that can drop variables on updates</li></ul> | <img src="https://img.shields.io/badge/Released-3DC6D0?style=for-the-badge" alt="Released"> |
+| **1.1.1** | <ul><li>Runs on Node.js 24 without root rights, with `PUID` and `PGID`</li><li>Refuses to start with an example login secret, and `SESSION_SECRET` is gone</li><li>Live updates are limited to admins</li><li>Frontend libraries and fonts ship with the app instead of external CDNs</li><li>Automated tests run before every image build</li><li>Major dependency updates, no known vulnerabilities</li><li>Scheduled backups follow the `TZ` time zone</li><li>Print view, statistics and web app use the active theme colors</li><li>The dashboard always shows current data, and logging out always leads to the login page</li><li>Changelog in the settings</li><li>Unraid: no second template that can drop variables on updates</li></ul> | <img src="https://img.shields.io/badge/Released-3DC6D0?style=for-the-badge" alt="Released"> |
 | **1.0.1** | <ul><li>Login right after first-run setup works</li><li>Admin actions show a clear success or error message, and a duplicate user is reported as an error</li><li>"Delete last items" works again</li><li>Natural sorting of titles and cassette numbers</li><li>Totals convert between currencies</li><li>All pages, dialogs and print views follow your language, dates and numbers too</li><li>English is the default language for new users</li><li>The app starts and recovers on its own when the database is unavailable</li><li>Scheduled backups catch up after downtime</li><li>Unusual links no longer cause server errors, and the web app installs correctly</li></ul> | <img src="https://img.shields.io/badge/Released-3DC6D0?style=for-the-badge" alt="Released"> |
 | **1.0.0** | <ul><li>First tagged release with versioned Docker images</li><li>First-run setup is locked once an admin exists</li><li>Login throttling per client, and old sessions end when the password changes</li><li>Avatar uploads only accept real image files</li><li>Hidden tapes, genres and types stay hidden on every page</li><li>Editing a tape keeps its cast, and a second copy never overwrites the first</li><li>Backup restore validates the file first, keeps a safety copy and rolls back on failure</li><li>Updated dependencies</li></ul> | <img src="https://img.shields.io/badge/Released-3DC6D0?style=for-the-badge" alt="Released"> |
 
